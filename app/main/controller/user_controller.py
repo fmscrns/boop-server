@@ -3,7 +3,7 @@ from flask_restx import Resource
 
 from ..util.dto import UserDto
 from ..util.decorator import *
-from ..service.user_service import save_new_user, get_all_users, get_a_user
+from ..service.user_service import save_new_user, get_all_users, get_a_user, patch_a_user
 
 api = UserDto.api
 _user = UserDto.user
@@ -41,3 +41,14 @@ class User(Resource):
             api.abort(404)
         else:
             return user
+
+    @api.response(201, 'User successfully updated.')
+    @api.doc('patch a user')
+    @api.expect(_user, validate=True)
+    def patch(self, public_id):
+        """patch a user given its identifier"""
+        auth_header = request.headers.get('Authorization')
+        if auth_header:
+            return patch_a_user(public_id, auth_header.split(" ")[1], request.json)
+
+        api.abort(401)

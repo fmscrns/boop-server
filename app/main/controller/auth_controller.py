@@ -27,7 +27,6 @@ class LogoutAPI(Resource):
     """
     Logout Resource
     """
-    @token_required
     @api.doc('logout a user')
     def post(self):
         # get auth token

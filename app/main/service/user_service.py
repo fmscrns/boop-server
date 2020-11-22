@@ -10,6 +10,7 @@ def save_new_user(data):
     if not user:
         new_user = User(
             public_id=str(uuid.uuid4()),
+            name=data["name"],
             email=data['email'],
             username=data['username'],
             password=data['password'],
@@ -20,7 +21,7 @@ def save_new_user(data):
     else:
         response_object = {
             'status': 'fail',
-            'message': 'User already exists. Please Log in.',
+            'message': 'User already exists. Please log in instead.',
         }
         return response_object, 409
 
@@ -31,6 +32,29 @@ def get_all_users():
 
 def get_a_user(public_id):
     return User.query.filter_by(public_id=public_id).first()
+
+def patch_a_user(public_id, auth_token, data):
+    decoded_pid = User.decode_auth_token(auth_token)
+
+    if User.query.filter_by(public_id=public_id).first().id == decoded_pid:
+        user = User.query.filter_by(public_id=public_id).first()
+  
+        user.name = data["name"]
+        user.username = data["username"]
+        user.email = data["email"]
+        user.password = data["password"]
+        db.session.commit()
+        response_object = {
+            'status': 'success',
+            'message': 'Successfully updated.'
+        }
+        return response_object, 201
+    else:
+        response_object = {
+            'status': 'fail',
+            'message': 'Forbidden to update.',
+        }
+        return response_object, 403
 
 
 def save_changes(data):
