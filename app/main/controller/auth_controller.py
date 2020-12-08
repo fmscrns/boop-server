@@ -21,6 +21,17 @@ class UserLogin(Resource):
         post_data = request.json
         return Auth.login_user(data=post_data)
 
+@api.route('/admin/login')
+class AdminLogin(Resource):
+    """
+        Admin Login Resource
+    """
+    @api.doc('admin login')
+    @api.expect(user_auth, validate=True)
+    def post(self):
+        # get the post data
+        post_data = request.json
+        return Auth.login_admin(data=post_data)
 
 @api.route('/logout')
 class LogoutAPI(Resource):

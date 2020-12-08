@@ -5,7 +5,7 @@ from app.main import db
 from app.main.model.user import User
 
 
-def save_new_user(data):
+def save_new_user(data, admin=False):
     user = User.query.filter_by(email=data['email']).first()
     if not user:
         new_user = User(
@@ -16,15 +16,16 @@ def save_new_user(data):
             password=data['password'],
             registered_on=datetime.datetime.utcnow()
         )
+        if admin is True:
+            new_user.admin = True
         save_changes(new_user)
         return generate_token(new_user)
     else:
         response_object = {
             'status': 'fail',
-            'message': 'User already exists. Please log in instead.',
+            'message': 'User already exists. Please sign in instead.',
         }
         return response_object, 409
-
 
 def get_all_users():
     return User.query.all()
@@ -33,29 +34,46 @@ def get_all_users():
 def get_a_user(public_id):
     return User.query.filter_by(public_id=public_id).first()
 
+def get_by_username(username):
+    return User.query.filter_by(username=username).first()
+
+def get_by_token(auth_token):
+    decoded_resp = User.decode_auth_token(auth_token)
+    if isinstance(decoded_resp, int):
+        return User.query.filter_by(id=decoded_resp).first()
+    return decoded_resp
+
 def patch_a_user(public_id, auth_token, data):
-    decoded_pid = User.decode_auth_token(auth_token)
-
-    if User.query.filter_by(public_id=public_id).first().id == decoded_pid:
-        user = User.query.filter_by(public_id=public_id).first()
-  
-        user.name = data["name"]
-        user.username = data["username"]
-        user.email = data["email"]
-        user.password = data["password"]
-        db.session.commit()
-        response_object = {
-            'status': 'success',
-            'message': 'Successfully updated.'
-        }
-        return response_object, 201
-    else:
-        response_object = {
-            'status': 'fail',
-            'message': 'Forbidden to update.',
-        }
-        return response_object, 403
-
+    decoded_resp = User.decode_auth_token(auth_token)
+    if isinstance(decoded_resp, int):
+        user = User.query.filter_by(public_id=public_id).first() 
+        if user:
+            if user.id == decoded_resp:
+                user = User.query.filter_by(public_id=public_id).first()
+        
+                user.name = data["name"]
+                user.username = data["username"]
+                user.email = data["email"]
+                user.password = data["password"]
+                db.session.commit()
+                response_object = {
+                    'status': 'success',
+                    'message': 'Successfully updated.'
+                }
+                return response_object, 201
+            else:
+                response_object = {
+                    'status': 'fail',
+                    'message': 'Forbidden to update.',
+                }
+                return response_object, 403
+        else:
+            response_object = {
+                'status': 'fail',
+                'message': 'User does not exist.',
+            }
+            return response_object, 404
+    return decoded_resp
 
 def save_changes(data):
     db.session.add(data)

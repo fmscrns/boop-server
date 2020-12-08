@@ -3,14 +3,43 @@ from ..service.blacklist_service import save_token
 
 
 class Auth:
-
     @staticmethod
     def login_user(data):
         try:
             # fetch the user data
             user = User.query.filter_by(username=data.get('username_or_email')).first()
             user = user if user else User.query.filter_by(email=data.get('username_or_email')).first()
-            if user and user.check_password(data.get('password')):
+            if user and user.check_password(data.get('password')) and user.admin == False:
+                auth_token = user.encode_auth_token(user.id)
+                if auth_token:
+                    response_object = {
+                        'status': 'success',
+                        'message': 'Successfully logged in.',
+                        'Authorization': auth_token.decode()
+                    }
+                    return response_object, 200
+            else:
+                response_object = {
+                    'status': 'fail',
+                    'message': 'email or password does not match.'
+                }
+                return response_object, 401
+
+        except Exception as e:
+            print(e)
+            response_object = {
+                'status': 'fail',
+                'message': 'Try again'
+            }
+            return response_object, 500
+
+    @staticmethod
+    def login_admin(data):
+        try:
+            # fetch the user data
+            user = User.query.filter_by(username=data.get('username_or_email')).first()
+            user = user if user else User.query.filter_by(email=data.get('username_or_email')).first()
+            if user and user.check_password(data.get('password')) and user.admin == True:
                 auth_token = user.encode_auth_token(user.id)
                 if auth_token:
                     response_object = {
@@ -63,7 +92,7 @@ class Auth:
         # get the auth token
         auth_token = new_request.headers.get('Authorization')
         if auth_token:
-            resp = User.decode_auth_token(auth_token)
+            resp = User.decode_auth_token(auth_token.split(" ")[1])
             if not isinstance(resp, str):
                 user = User.query.filter_by(id=resp).first()
                 response_object = {
