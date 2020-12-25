@@ -3,6 +3,7 @@ import datetime
 
 from app.main import db
 from app.main.model.specie import Specie
+from app.main.model.breed import Breed
 
 
 def save_new_specie(data):
@@ -28,32 +29,53 @@ def save_new_specie(data):
 
 def patch_a_specie(public_id, data):
     specie = Specie.query.filter_by(public_id=public_id).first()
-
-    specie.name = data["name"]
-    db.session.commit()
-    response_object = {
-        'status': 'success',
-        'message': 'Specie successfully updated.'
-    }
-    return response_object, 201
-
-def delete_a_specie(public_id, data):
-    specie = Specie.query.filter_by(public_id=public_id).first()
-
-    if data["name"] == specie.name:
-        db.session.delete(specie)
+    if specie:
+        specie.name = data["name"]
         db.session.commit()
         response_object = {
             'status': 'success',
-            'message': 'Specie successfully deleted.'
+            'message': 'Specie successfully updated.'
         }
         return response_object, 201
     else:
         response_object = {
             'status': 'fail',
-            'message': 'Not match.'
+            'message': 'No specie found.'
         }
-        return response_object, 400
+        return response_object, 404
+
+def delete_a_specie(public_id, data):
+    specie = Specie.query.filter_by(public_id=public_id).first()
+
+    if specie:
+        breed = Breed.query.filter_by(specie_parent_id=public_id).first()
+            
+        if data["name"] == specie.name and not breed:
+            db.session.delete(specie)
+            db.session.commit()
+            response_object = {
+                'status': 'success',
+                'message': 'Specie successfully deleted.'
+            }
+            return response_object, 201
+        elif breed:
+            response_object = {
+                'status': 'fail',
+                'message': 'Delete first all dependent specie breeds.'
+            }
+            return response_object, 405
+        else:
+            response_object = {
+                'status': 'fail',
+                'message': 'Not match.'
+            }
+            return response_object, 400
+    else:
+        response_object = {
+            'status': 'fail',
+            'message': 'No specie found.'
+        }
+        return response_object, 404
 
 def get_all_species():
     return Specie.query.all()

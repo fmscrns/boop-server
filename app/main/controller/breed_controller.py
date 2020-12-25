@@ -3,7 +3,7 @@ from flask_restx import Resource
 
 from ..util.dto import BreedDto
 from ..util.decorator import *
-from ..service.breed_service import save_new_breed, get_all_breeds, get_a_breed
+from ..service.breed_service import save_new_breed, get_all_breeds, get_a_breed, patch_a_breed, delete_a_breed
 
 api = BreedDto.api
 _breed = BreedDto.breed
@@ -52,6 +52,7 @@ class Breed(Resource):
         else:
             return breed
 
+    @admin_token_required
     @api.response(201, 'Breed successfully updated.')
     @api.doc('patch a breed')
     @api.expect(_breed, validate=True)
@@ -59,10 +60,10 @@ class Breed(Resource):
         """patch a breed given its identifier"""
         return patch_a_breed(public_id, request.json)
 
-    
+    @admin_token_required
     @api.response(201, 'Breed successfully deleted.')
     @api.doc('delete a breed')
     @api.expect(_breed, validate=True)
-    def patch(self, public_id):
+    def delete(self, public_id):
         """delete a breed given its identifier"""
         return delete_a_breed(public_id, request.json)

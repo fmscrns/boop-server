@@ -3,7 +3,7 @@ from flask_restx import Resource
 
 from ..util.dto import SpecieDto
 from ..util.decorator import *
-from ..service.specie_service import save_new_specie, get_all_species, get_a_specie
+from ..service.specie_service import save_new_specie, get_all_species, get_a_specie, patch_a_specie, delete_a_specie
 
 api = SpecieDto.api
 _specie = SpecieDto.specie
@@ -42,6 +42,7 @@ class Specie(Resource):
         else:
             return specie
 
+    @admin_token_required
     @api.response(201, 'Specie successfully updated.')
     @api.doc('patch a specie')
     @api.expect(_specie, validate=True)
@@ -49,10 +50,10 @@ class Specie(Resource):
         """patch a specie given its identifier"""
         return patch_a_specie(public_id, request.json)
 
-    
+    @admin_token_required
     @api.response(201, 'Specie successfully deleted.')
     @api.doc('delete a specie')
     @api.expect(_specie, validate=True)
-    def patch(self, public_id):
+    def delete(self, public_id):
         """delete a specie given its identifier"""
         return delete_a_specie(public_id, request.json)

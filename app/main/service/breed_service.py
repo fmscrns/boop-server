@@ -31,32 +31,55 @@ def save_new_breed(data):
 
 def patch_a_breed(public_id, data):
     breed = Breed.query.filter_by(public_id=public_id).first()
+    specie = Specie.query.filter_by(public_id=data["parent_id"]).first()
 
-    breed.name = data["name"]
-    db.session.commit()
-    response_object = {
-        'status': 'success',
-        'message': 'Breed successfully updated.'
-    }
-    return response_object, 201
-
-def delete_a_breed(public_id, data):
-    breed = Breed.query.filter_by(public_id=public_id).first()
-
-    if data["name"] == breed.name:
-        db.session.delete(breed)
+    if breed and specie:
+        breed.name = data["name"]
+        breed.specie_parent_id = data["parent_id"]
         db.session.commit()
         response_object = {
             'status': 'success',
-            'message': 'Breed successfully deleted.'
+            'message': 'Breed successfully updated.'
         }
         return response_object, 201
     else:
         response_object = {
             'status': 'fail',
-            'message': 'Not match.'
+            'message': 'No breed or specie found.'
         }
-        return response_object, 400
+        return response_object, 404
+
+def delete_a_breed(public_id, data):
+    breed = Breed.query.filter_by(public_id=public_id).first()
+    specie = Specie.query.filter_by(public_id=data["parent_id"]).first()
+    if breed and specie:
+        if breed.specie_parent_id==specie.public_id:
+            if data["name"] == breed.name:
+                db.session.delete(breed)
+                db.session.commit()
+                response_object = {
+                    'status': 'success',
+                    'message': 'Breed successfully deleted.'
+                }
+                return response_object, 201
+            else:
+                response_object = {
+                    'status': 'fail',
+                    'message': 'Not match.'
+                }
+                return response_object, 400
+        else:
+            response_object = {
+                'status': 'fail',
+                'message': 'bad request.'
+            }
+            return response_object, 400
+    else:
+        response_object = {
+            'status': 'fail',
+            'message': 'No breed or specie found.'
+        }
+        return response_object, 404
 
 def get_all_breeds():
     breeds = [
@@ -76,10 +99,30 @@ def get_all_breeds():
     ]
     if breeds:
         return breeds
-    return 404
+    return {
+        'status': 'fail',
+        'message': 'No breeds found.'
+    }, 404
 
 def get_a_breed(public_id):
-    return Breed.query.filter_by(public_id=public_id).first()
+    breed = db.session.query(
+        Breed.public_id,
+        Breed.name,
+        Specie.public_id,
+        Specie.name
+    ).filter(
+        Breed.specie_parent_id == Specie.public_id
+    ).first()
+
+    return dict(
+        public_id = breed[0],
+        name = breed[1],
+        parent_id = breed[2],
+        parent_name = breed[3]
+    ) if breed else {
+        'status': 'fail',
+        'message': 'No breed found.'
+    }, 404
 
 def get_all_by_specie(specie_id):
     return Breed.query.filter_by(specie_parent_id=specie_id).all()
