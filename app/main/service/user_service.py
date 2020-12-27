@@ -51,14 +51,18 @@ def patch_a_user(public_id, auth_token, data):
     if isinstance(decoded_resp, int):
         user = User.query.filter_by(public_id=public_id).first() 
 
-        if user and not User.query.filter_by(username=data["username"]).first() and not User.query.filter_by(email=data["email"]).first():
+        user_by_username = User.query.filter_by(username=data["username"]).first()
+        user_by_email = User.query.filter_by(email=data["email"]).first()
+
+        if user and (not user_by_username or user_by_username == user) and (not user_by_email or user_by_email == user):
+            for d in data:
+                print(data[d])
             if user.id == decoded_resp:
-                user = User.query.filter_by(public_id=public_id).first()
-        
                 user.name = data["name"]
                 user.username = data["username"]
                 user.email = data["email"]
                 user.password = data["password"]
+                user.photo = data["photo"]
                 db.session.commit()
                 response_object = {
                     'status': 'success',

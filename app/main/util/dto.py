@@ -8,7 +8,8 @@ class UserDto:
         'email': fields.String(required=True, description='user email address', pattern='^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'),
         'username': fields.String(required=True, description='user username'),
         'password': fields.String(required=True, description='user password'),
-        'public_id': fields.String(description='user Identifier')
+        'public_id': fields.String(description='user Identifier'),
+        "photo": fields.String(description="user profile photo"),
     })
 
 class SpecieDto:
