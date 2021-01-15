@@ -14,7 +14,7 @@ def token_required(f):
         if not token:
             return data, status
 
-        return f(*args, **kwargs)
+        return f(user_pid=token["user_pid"], *args, **kwargs)
 
     return decorated
 

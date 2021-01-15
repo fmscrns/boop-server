@@ -71,7 +71,7 @@ class UserByUsername(Resource):
     @token_required
     @api.doc('get a user')
     @api.marshal_with(_user)
-    def get(self, username):
+    def get(self, user_pid, username):
         """get a user given its username"""
         user = get_by_username(username)
         if not user:

@@ -3,7 +3,7 @@ from flask_restx import Resource
 
 from ..util.dto import BreedDto
 from ..util.decorator import *
-from ..service.breed_service import save_new_breed, get_all_breeds, get_a_breed, patch_a_breed, delete_a_breed
+from ..service.breed_service import save_new_breed, get_all_breeds, get_all_by_specie, get_a_breed, patch_a_breed, delete_a_breed
 
 api = BreedDto.api
 _breed = BreedDto.breed
@@ -14,7 +14,7 @@ class BreedList(Resource):
     @token_required
     @api.doc('list_of_registered_breeds')
     @api.marshal_list_with(_breed, envelope='data')
-    def get(self):
+    def get(self, user_pid):
         """List all registered breeds"""
         return get_all_breeds()
 
@@ -27,15 +27,15 @@ class BreedList(Resource):
         data = request.json
         return save_new_breed(data=data)
 
-@api.route('/specie/<specie_id>')
-@api.param('specie_id', 'The Specie parent identifier')
+@api.route('/parent/<parent_id>')
+@api.param('parent_id', 'The Specie parent identifier')
 class BreedListBySpecie(Resource):
     @token_required
     @api.doc('list_of_registered_breeds_by_specie_parent')
     @api.marshal_list_with(_breed, envelope='data')
-    def get(self):
+    def get(self, user_pid, parent_id):
         """List all registered breeds"""
-        return get_all_by_specie()
+        return get_all_by_specie(parent_id)
 
 @api.route('/<public_id>')
 @api.param('public_id', 'The Breed identifier')

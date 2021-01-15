@@ -55,8 +55,6 @@ def patch_a_user(public_id, auth_token, data):
         user_by_email = User.query.filter_by(email=data["email"]).first()
 
         if user and (not user_by_username or user_by_username == user) and (not user_by_email or user_by_email == user):
-            for d in data:
-                print(data[d])
             if user.id == decoded_resp:
                 user.name = data["name"]
                 user.username = data["username"]
