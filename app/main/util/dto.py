@@ -39,7 +39,7 @@ class PetDto:
     api = Namespace("pet", description="pet related operations")
     
     pet = api.model("pet", {
-        "id": fields.String(description="pet identifier"),
+        "public_id": fields.String(description="pet identifier"),
         "name": fields.String(required=True, description="pet name"),
         "bio": fields.String(description="pet biography"),
         "birthday": fields.DateTime(dt_format="rfc822", description="pet birthday"),
@@ -61,14 +61,40 @@ class BusinessDto:
     api = Namespace("business", description="business related operations")
     
     business = api.model("business", {
-        "id": fields.String(description="business identifier"),
+        "public_id": fields.String(description="business identifier"),
         "name": fields.String(required=True, description="business name"),
         "bio": fields.String(description="business biography"),
-        "_type": fields.Integer(required=True, description="business type", min=0, max=6),
+        "_type": fields.List(fields.Nested(
+            api.model("_type", {
+                "public_id": fields.String(required=True, description="type identifier", attribute="type_pid"),
+                "name": fields.String(description="type name", attribute="type_name"),
+            })
+        ), required=True, description="business type"),
         "photo": fields.String(description="business profile photo filename"),
         "registered_on": fields.DateTime(description="creation date"),
         "exec_id": fields.String(description="user identifier"),
         "exec_name": fields.String(description="user name"),
         "exec_username": fields.String(description="user username"),
         "exec_photo": fields.String(description="user profile photo filename")
+    })
+
+class PostDto:
+    api = Namespace("post", description="post related operations")
+    
+    post = api.model("post", {
+        "public_id": fields.String(description="post identifier"),
+        "content": fields.String(required=True, description="post content"),
+        "photo": fields.String(description="post photo"),
+        "registered_on": fields.DateTime(description="creation date"),
+        "creator_id": fields.String(description="user identifier"),
+        "creator_name": fields.String(description="user name"),
+        "creator_username": fields.String(description="user username"),
+        "creator_photo": fields.String(description="user profile photo filename")
+    })
+
+class BusinessTypeDto:
+    api = Namespace('business_type', description='business type related operations')
+    business_type = api.model('business_type', {
+        'name': fields.String(required=True, description='business type name'),
+        'public_id': fields.String(description='business type Identifier')
     })

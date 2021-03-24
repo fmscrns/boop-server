@@ -9,7 +9,7 @@ class Specie(db.Model):
     name = db.Column(db.String(50), unique=True, nullable=False)
     registered_on = db.Column(db.DateTime, nullable=False)
 
-    breed_parent_rel = db.relationship("Breed", backref="specie", lazy="joined")
+    breed_parent_rel = db.relationship("Breed", cascade="all,delete", lazy="joined")
 
     def __repr__(self):
         return "<Specie '{}'>".format(self.name)

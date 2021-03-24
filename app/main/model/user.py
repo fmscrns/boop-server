@@ -13,10 +13,13 @@ class User(db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False)
     registered_on = db.Column(db.DateTime, nullable=False)
     admin = db.Column(db.Boolean, nullable=False, default=False)
-    photo = db.Column(db.String(50), default="default")
+    photo = db.Column(db.String(50), default="default_user.jpg")
     public_id = db.Column(db.String(100), unique=True)
     username = db.Column(db.String(50), unique=True)
     password_hash = db.Column(db.String(100))
+
+    owner_pet_rel = db.relationship('Pet', lazy=True)
+    exec_business_rel = db.relationship('Business', lazy=True)
 
     @property
     def password(self):

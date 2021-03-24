@@ -35,7 +35,10 @@ class BreedListBySpecie(Resource):
     @api.marshal_list_with(_breed, envelope='data')
     def get(self, user_pid, parent_id):
         """List all registered breeds"""
-        return get_all_by_specie(parent_id)
+        breeds = get_all_by_specie(parent_id)
+        if not isinstance(breeds, tuple):
+            return breeds
+        api.abort(404)
 
 @api.route('/<public_id>')
 @api.param('public_id', 'The Breed identifier')

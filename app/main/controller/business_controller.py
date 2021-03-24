@@ -25,7 +25,12 @@ class BusinessList(Resource):
     def post(self, user_pid):
         """Creates a new Business """
         data = request.json
-        return save_new_business(user_pid=user_pid, data=data)
+        save_business_resp = save_new_business(user_pid=user_pid, data=data)
+
+        if isinstance(save_business_resp, tuple):
+            return save_business_resp
+        else:
+            api.abort(save_business_resp)
 
 @api.route('/exec/<exec_id>')
 @api.param("exec_id", "The User public identifier")

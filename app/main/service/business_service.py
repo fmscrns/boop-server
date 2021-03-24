@@ -2,45 +2,81 @@ import uuid
 import datetime
 
 from app.main import db
-from app.main.model.business import Business
+from app.main.model.business import Business, business_type_table
+from app.main.model.business_operation import BusinessOperation
+from app.main.model.business_type import BusinessType
 from app.main.model.user import User
 
 def save_new_business(user_pid, data):
-    new_business = Business(
-        public_id = str(uuid.uuid4()),
-        name = data.get("name"),
-        bio = data.get("bio"),
-        _type = data.get("_type"),
-        photo = data.get("photo"),
-        registered_on = datetime.datetime.utcnow(),
-        user_exec_id = user_pid,
-    )
-    save_changes(new_business)
-    response_object = {
-        'status': 'success',
-        'message': 'Business successfully registered.',
-        'payload': User.query.filter_by(public_id=user_pid).first().username
-    }
-    return response_object, 201
+    try:
+        business_pid = str(uuid.uuid4())
+        new_business = Business(
+            public_id = business_pid,
+            name = data.get("name"),
+            bio = data.get("bio"),
+            photo = data.get("photo"),
+            registered_on = datetime.datetime.utcnow(),
+            user_exec_id = user_pid
+        )
+        save_changes(new_business)
+        for _type in data.get("_type"):
+            statement = business_type_table.insert().values(
+                public_id = str(uuid.uuid4()),
+                business_pid = business_pid,
+                type_pid = _type["public_id"]
+            )
+            db.session.execute(statement)
+            db.session.commit()
+        per_day_data = [
+            ["Monday", data.get("mon_open_bool"), data.get("mon_open_time"), data.get("mon_close_time")],
+            ["Tuesday", data.get("tue_open_bool"), data.get("tue_open_time"), data.get("tue_close_time")],
+            ["Wednesday", data.get("wed_open_bool"), data.get("wed_open_time"), data.get("wed_close_time")],
+            ["Thursday", data.get("thu_open_bool"), data.get("thu_open_time"), data.get("thu_close_time")],
+            ["Friday", data.get("fri_open_bool"), data.get("fri_open_time"), data.get("fri_close_time")],
+            ["Saturday", data.get("sat_open_bool"), data.get("sat_open_time"), data.get("sat_close_time")],
+            ["Sunday", data.get("sun_open_bool"), data.get("sun_open_time"), data.get("sun_close_time")],
+        ]
+        for data in per_day_data:
+            new_operation = BusinessOperation(
+                public_id = str(uuid.uuid4()),
+                day = data[0],
+                is_open = data[1],
+                start_at = data[2],
+                end_at = data[3],
+                business_prop_id = business_pid
+            )
+            save_changes(new_operation)
+        response_object = {
+            'status': 'success',
+            'message': 'Business successfully registered.',
+            'payload': User.query.filter_by(public_id=user_pid).first().username
+        }
+        return response_object, 201
+    except:
+        return 500
 
 def get_all_businesses_by_user(user_pid):
     return [
         dict(
-            id = business[0],
+            public_id = business[0],
             name = business[1],
             bio = business[2],
-            _type = business[3],
-            photo = business[4],
-            registered_on = business[5],
-            exec_id = business[6],
-            exec_name = business[7],
-            exec_username = business[8],
-            exec_photo = business[9]
+            _type = [
+                dict(
+                    type_pid = _type[0],
+                    type_name = _type[1]
+                ) for _type in db.session.query(business_type_table.c.type_pid, BusinessType.name).filter(business_type_table.c.business_pid==business[0]).filter(business_type_table.c.type_pid==BusinessType.public_id).all()
+            ],
+            photo = business[3],
+            registered_on = business[4],
+            exec_id = business[5],
+            exec_name = business[6],
+            exec_username = business[7],
+            exec_photo = business[8]
         ) for business in db.session.query(
             Business.public_id,
             Business.name,
             Business.bio,
-            Business._type,
             Business.photo,
             Business.registered_on,
             User.public_id,
@@ -59,9 +95,19 @@ def patch_a_business(public_id, user_pid, data):
 
     if business:
         if business.user_exec_id == user_pid:
+            statement = business_type_table.delete().where(business_type_table.c.business_pid==business.public_id)
+            db.session.execute(statement)
+            db.session.commit()
+            for _type in data.get("_type"):
+                statement = business_type_table.insert().values(
+                    public_id = str(uuid.uuid4()),
+                    business_pid = business.public_id,
+                    type_pid = _type["public_id"]
+                )
+                db.session.execute(statement)
+                db.session.commit()
             business.name = data.get("name")
             business.bio = data.get("bio")
-            business._type = data.get("_type")
             business.photo = data.get("photo")
             db.session.commit()
             response_object = {
@@ -108,7 +154,6 @@ def get_a_business(public_id):
         Business.public_id,
         Business.name,
         Business.bio,
-        Business._type,
         Business.photo,
         Business.registered_on,
         User.public_id,
@@ -123,16 +168,21 @@ def get_a_business(public_id):
 
     if business:
         return dict(
-            id = business[0],
+            public_id = business[0],
             name = business[1],
             bio = business[2],
-            _type = business[3],
-            photo = business[4],
-            registered_on = business[5],
-            exec_id = business[6],
-            exec_name = business[7],
-            exec_username = business[8],
-            exec_photo = business[9]
+            _type = [
+                dict(
+                    type_pid = _type[0],
+                    type_name = _type[1]
+                ) for _type in db.session.query(business_type_table.c.type_pid, BusinessType.name).filter(business_type_table.c.business_pid==business[0]).filter(business_type_table.c.type_pid==BusinessType.public_id).all()
+            ],
+            photo = business[3],
+            registered_on = business[4],
+            exec_id = business[5],
+            exec_name = business[6],
+            exec_username = business[7],
+            exec_photo = business[8]
         )
 
 def save_changes(data):

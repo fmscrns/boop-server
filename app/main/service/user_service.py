@@ -37,6 +37,9 @@ def get_all_users():
 def get_a_user(public_id):
     return User.query.filter_by(public_id=public_id).first()
 
+def get_by_email(email):
+    return User.query.filter_by(email=email).first() 
+
 def get_by_username(username):
     user = User.query.filter_by(username=username).first() 
     if user.admin is False:

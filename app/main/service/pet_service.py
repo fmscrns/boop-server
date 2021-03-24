@@ -41,7 +41,7 @@ def save_new_pet(user_pid, data):
 def get_all_pets_by_user(user_pid):
     return [
         dict(
-            id = pet[0],
+            public_id = pet[0],
             name = pet[1],
             bio = pet[2],
             birthday = pet[3],
@@ -118,7 +118,7 @@ def get_a_pet(public_id):
 
     if pet:
         return dict(
-            id = pet[0],
+            public_id = pet[0],
             name = pet[1],
             bio = pet[2],
             birthday = pet[3],

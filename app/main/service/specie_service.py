@@ -47,33 +47,18 @@ def patch_a_specie(public_id, data):
 def delete_a_specie(public_id, data):
     specie = Specie.query.filter_by(public_id=public_id).first()
 
-    if specie:
-        breed = Breed.query.filter_by(specie_parent_id=public_id).first()
-            
-        if data["name"] == specie.name and not breed:
-            db.session.delete(specie)
-            db.session.commit()
-            response_object = {
-                'status': 'success',
-                'message': 'Specie successfully deleted.'
-            }
-            return response_object, 201
-        elif breed:
-            response_object = {
-                'status': 'fail',
-                'message': 'Delete first all dependent specie breeds.'
-            }
-            return response_object, 405
-        else:
-            response_object = {
-                'status': 'fail',
-                'message': 'Not match.'
-            }
-            return response_object, 400
+    if specie and data["name"] == specie.name:
+        db.session.delete(specie)
+        db.session.commit()
+        response_object = {
+            'status': 'success',
+            'message': 'Specie successfully deleted.'
+        }
+        return response_object, 201
     else:
         response_object = {
             'status': 'fail',
-            'message': 'No specie found.'
+            'message': 'No specie found or name not match.'
         }
         return response_object, 404
 

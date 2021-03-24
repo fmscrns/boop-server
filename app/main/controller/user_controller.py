@@ -3,7 +3,7 @@ from flask_restx import Resource
 
 from ..util.dto import UserDto
 from ..util.decorator import *
-from ..service.user_service import save_new_user, get_all_users, get_a_user, get_by_username, patch_a_user, get_by_token
+from ..service.user_service import save_new_user, get_all_users, get_a_user, get_by_email, get_by_username, patch_a_user, get_by_token
 
 api = UserDto.api
 _user = UserDto.user
@@ -63,6 +63,20 @@ class User(Resource):
                 api.abort(401, message=patch_user)
             else:
                 return patch_user
+
+@api.route('/email/<email>')
+@api.param('email', 'The User identifier')
+@api.response(404, 'User not found.')
+class UserByEmail(Resource):
+    @api.doc('get a user')
+    @api.marshal_with(_user)
+    def get(self, email):
+        """get a user given its email"""
+        user = get_by_email(email)
+        if not user:
+            api.abort(404)
+        else:
+            return user
 
 @api.route('/username/<username>')
 @api.param('username', 'The User identifier')
