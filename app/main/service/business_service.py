@@ -7,6 +7,11 @@ from app.main.model.business_operation import BusinessOperation
 from app.main.model.business_type import BusinessType
 from app.main.model.user import User
 
+# def get_all_businesses():
+#     return Business.query.order_by(Business.registered_on.desc()).all()
+
+
+
 def save_new_business(user_pid, data):
     try:
         business_pid = str(uuid.uuid4())
@@ -65,7 +70,12 @@ def get_all_businesses_by_user(user_pid):
                 dict(
                     type_pid = _type[0],
                     type_name = _type[1]
-                ) for _type in db.session.query(business_type_table.c.type_pid, BusinessType.name).filter(business_type_table.c.business_pid==business[0]).filter(business_type_table.c.type_pid==BusinessType.public_id).all()
+                ) for _type in db.session.query(
+                    business_type_table.c.type_pid, 
+                    BusinessType.name
+                    ).filter(business_type_table.c.business_pid==business[0]
+                    ).filter(business_type_table.c.type_pid==BusinessType.public_id
+                    ).all()
             ],
             photo = business[3],
             registered_on = business[4],

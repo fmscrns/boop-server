@@ -98,3 +98,33 @@ class BusinessTypeDto:
         'name': fields.String(required=True, description='business type name'),
         'public_id': fields.String(description='business type Identifier')
     })
+
+
+class CircleDto:
+    api = Namespace("circle", description="circle related operations")
+    
+    circle = api.model("circle", {
+        "public_id": fields.String(description="circle identifier"),
+        "name": fields.String(required=True, description="circle name"),
+        "bio": fields.String(description="circle biography"),
+        "_type": fields.List(fields.Nested(
+            api.model("_type", {
+                "public_id": fields.String(required=True, description="type identifier", attribute="type_pid"),
+                "name": fields.String(description="type name", attribute="type_name"),
+            })
+        ), required=True, description="circle type"),
+        "photo": fields.String(description="circle profile photo filename"),
+        "registered_on": fields.DateTime(description="creation date"),
+        "admin_id": fields.String(description="user identifier"),
+        "admin_name": fields.String(description="user name"),
+        "admin_username": fields.String(description="user username"),
+        "admin_photo": fields.String(description="user profile photo filename")
+    })
+
+
+class CircleTypeDto:
+    api = Namespace('circle_type', description='circle type related operations')
+    circle_type = api.model('circle_type', {
+        'name': fields.String(required=True, description='circle type name'),
+        'public_id': fields.String(description='circle type Identifier')
+    })

@@ -20,6 +20,7 @@ class User(db.Model):
 
     owner_pet_rel = db.relationship('Pet', lazy=True)
     exec_business_rel = db.relationship('Business', lazy=True)
+    admin_circle_rel =db.relationship('Circle', lazy=True)
 
     @property
     def password(self):

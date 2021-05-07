@@ -3,7 +3,7 @@ from flask_restx import Resource
 
 from ..util.dto import BusinessDto
 from ..util.decorator import *
-from ..service.business_service import save_new_business, get_all_businesses_by_user, get_a_business, patch_a_business, delete_a_business
+from ..service.business_service import save_new_business,get_all_businesses, get_all_businesses_by_user, get_a_business, patch_a_business, delete_a_business
 
 api = BusinessDto.api
 _business = BusinessDto.business
@@ -12,11 +12,11 @@ _business = BusinessDto.business
 @api.route('/')
 class BusinessList(Resource):
     # @admin_token_required
-    # @api.doc('list_of_registered_businesses')
-    # @api.marshal_list_with(_business, envelope='data')
-    # def get(self):
-    #     """List all registered businesses"""
-    #     return get_all_businesses()
+    @api.doc('list_of_registered_businesses')
+    @api.marshal_list_with(_business, envelope='data')
+    def get(self):
+        """List all registered businesses"""
+        return get_all_businesses()
 
     @token_required
     @api.response(201, 'Business successfully created.')
