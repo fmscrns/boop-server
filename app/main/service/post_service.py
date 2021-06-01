@@ -49,7 +49,29 @@ def get_all_posts_by_user(user_pid):
     ]
 
 def get_all_posts():
-    return Post.query.all()
+    return [
+        dict(
+            public_id = post[0],
+            content = post[1],
+            photo = post[2],
+            registered_on = post[3],
+            creator_id = post[4],
+            creator_name = post[5],
+            creator_username = post[6],
+            creator_photo = post[7]
+        ) for post in db.session.query(
+            Post.public_id,
+            Post.content,
+            Post.photo,
+            Post.registered_on,
+            User.public_id,
+            User.name,
+            User.username,
+            User.photo
+        ).filter(
+            Post.user_creator_id == User.public_id
+        ).order_by(Post.registered_on.desc()).all()
+    ]
 
 def get_a_post(public_id):
     post = db.session.query(

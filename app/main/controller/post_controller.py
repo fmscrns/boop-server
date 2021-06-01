@@ -3,7 +3,7 @@ from flask_restx import Resource
 
 from ..util.dto import PostDto
 from ..util.decorator import *
-from ..service.post_service import save_new_post,get_all_posts, get_all_posts_by_user, get_a_post, delete_a_post
+from ..service.post_service import save_new_post, get_all_posts, get_all_posts_by_user, get_a_post, delete_a_post
 
 api = PostDto.api
 _post = PostDto.post
@@ -14,9 +14,10 @@ class PostList(Resource):
     @token_required
     @api.doc('list_of_registered_posts')
     @api.marshal_list_with(_post, envelope='data')
-    def get(self):
+    def get(self, user_pid):
         """List all registered posts"""
         return get_all_posts()
+        # print(get_all_posts())
 
     @token_required
     @api.response(201, 'Post successfully created.')
