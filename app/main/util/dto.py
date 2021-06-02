@@ -121,7 +121,8 @@ class CircleDto:
         "admin_name": fields.String(description="user name"),
         "admin_username": fields.String(description="user username"),
         "admin_photo": fields.String(description="user profile photo filename"),
-        "visitor_auth": fields.Integer(description="visiting user authorization")
+        "visitor_auth": fields.Integer(description="visiting user authorization"),
+        "member_count": fields.Integer(description="member count")
     })
 
 

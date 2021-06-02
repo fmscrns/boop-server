@@ -38,7 +38,7 @@ class BreedListBySpecie(Resource):
         breeds = get_all_by_specie(parent_id)
         if not isinstance(breeds, tuple):
             return breeds
-        api.abort(404)
+        api.abort(breeds[1])
 
 @api.route('/<public_id>')
 @api.param('public_id', 'The Breed identifier')

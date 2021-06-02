@@ -1,3 +1,4 @@
+from app.main.service import model_save_changes
 import uuid
 import datetime
 
@@ -16,7 +17,7 @@ def save_new_breed(data):
             specie_parent_id=data["parent_id"],
             registered_on=datetime.datetime.utcnow()
         )
-        save_changes(new_breed)
+        model_save_changes(new_breed)
         response_object = {
             'status': 'success',
             'message': 'Breed successfully registered.'
@@ -90,7 +91,7 @@ def delete_a_breed(public_id, data):
         return response_object, 404
 
 def get_all_breeds():
-    breeds = [
+    return [
         dict(
             public_id = breed[0],
             name = breed[1],
@@ -105,12 +106,6 @@ def get_all_breeds():
             Breed.specie_parent_id == Specie.public_id
         ).all()
     ]
-    if breeds:
-        return breeds
-    return {
-        'status': 'fail',
-        'message': 'No breeds found.'
-    }, 404
 
 def get_a_breed(public_id):
     breed = db.session.query(
@@ -156,7 +151,3 @@ def get_all_by_specie(specie_id):
         'status': 'fail',
         'message': 'No breeds found.'
     }, 404
-
-def save_changes(data):
-    db.session.add(data)
-    db.session.commit()

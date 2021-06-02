@@ -1,3 +1,4 @@
+from app.main.service import model_save_changes
 import uuid
 import datetime
 
@@ -13,7 +14,7 @@ def save_new_businessType(data):
             name=data["name"],
             registered_on=datetime.datetime.utcnow()
         )
-        save_changes(new_businessType)
+        model_save_changes(new_businessType)
         response_object = {
             'status': 'success',
             'message': 'Business type successfully registered.'
@@ -66,7 +67,3 @@ def get_all_businessTypes():
 
 def get_a_businessType(public_id):
     return BusinessType.query.filter_by(public_id=public_id).first()
-
-def save_changes(data):
-    db.session.add(data)
-    db.session.commit()

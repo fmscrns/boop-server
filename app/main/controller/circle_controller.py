@@ -3,7 +3,8 @@ from flask_restx import Resource
 
 from ..util.dto import CircleDto, UserDto
 from ..util.decorator import *
-from ..service.circle_service import save_new_circle, get_all_circles_by_user, get_a_circle, patch_a_circle, delete_a_circle, create_circle_member, delete_circle_member, get_all_circle_members, accept_circle_member
+from ..service.circle_service import save_new_circle, get_all_circles_by_user, get_a_circle, patch_a_circle, delete_a_circle
+from ..service.circleMember_service import create_circle_member, delete_circle_member, get_all_circle_members, accept_circle_member
 
 api = CircleDto.api
 _circle = CircleDto.circle
@@ -105,6 +106,7 @@ class CircleMember(Resource):
     @token_required
     @api.response(201, 'Circle member successfully deleted.')
     @api.doc('delete circle member')
+    @api.expect(_circle, validate=True)
     def delete(self, user_pid, public_id, member_id):
         """delete circle member given circle identifier"""
-        return delete_circle_member(user_pid, public_id, member_id)
+        return delete_circle_member(user_pid, public_id, member_id, request.json)

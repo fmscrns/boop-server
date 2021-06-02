@@ -1,3 +1,4 @@
+from app.main.service import model_save_changes
 import uuid
 import datetime
 
@@ -13,7 +14,7 @@ def save_new_circleType(data):
             name=data["name"],
             registered_on=datetime.datetime.utcnow()
         )
-        save_changes(new_circleType)
+        model_save_changes(new_circleType)
         response_object = {
             'status': 'success',
             'message': 'Circle type successfully registered.'
@@ -66,7 +67,3 @@ def get_all_circleTypes():
 
 def get_a_circleType(public_id):
     return CircleType.query.filter_by(public_id=public_id).first()
-
-def save_changes(data):
-    db.session.add(data)
-    db.session.commit()

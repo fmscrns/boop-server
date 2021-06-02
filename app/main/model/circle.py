@@ -1,5 +1,6 @@
 from datetime import datetime
 from .. import db
+from .user import circle_member_table
 
 circle_type_table = db.Table('circle_type_table',
     db.Column('id', db.Integer, primary_key=True, autoincrement=True),
@@ -19,8 +20,9 @@ class Circle(db.Model):
     bio = db.Column(db.String(100))
     photo = db.Column(db.String(50))
 
-    prop_circle_rel = db.relationship('CircleType', secondary=circle_type_table, lazy="joined")
-    #prop_membership_rel = db.relationship('CircleMembership', secondary=circle_membership_table, lazy="joined")
+    prop_circle_rel = db.relationship('CircleType', secondary=circle_type_table, cascade="save-update", lazy="joined")
+    prop_membership_rel = db.relationship('User', secondary=circle_member_table, cascade="save-update", lazy="joined")
+    child_post_rel = db.relationship('Post', cascade="all,delete", lazy="joined")
     
     def __repr__(self):
         return "<Circle '{}'>".format(self.name)

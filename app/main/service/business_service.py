@@ -6,7 +6,7 @@ from app.main.model.business import Business, business_type_table
 from app.main.model.business_operation import BusinessOperation
 from app.main.model.business_type import BusinessType
 from app.main.model.user import User
-
+from app.main.service import model_save_changes, table_save_changes
 # def get_all_businesses():
 #     return Business.query.order_by(Business.registered_on.desc()).all()
 
@@ -23,15 +23,14 @@ def save_new_business(user_pid, data):
             registered_on = datetime.datetime.utcnow(),
             user_executive_id = user_pid
         )
-        save_changes(new_business)
+        model_save_changes(new_business)
         for _type in data.get("_type"):
             statement = business_type_table.insert().values(
                 public_id = str(uuid.uuid4()),
                 business_pid = business_pid,
                 type_pid = _type["public_id"]
             )
-            db.session.execute(statement)
-            db.session.commit()
+            table_save_changes(statement)
         per_day_data = [
             ["Monday", data.get("mon_open_bool"), data.get("mon_open_time"), data.get("mon_close_time")],
             ["Tuesday", data.get("tue_open_bool"), data.get("tue_open_time"), data.get("tue_close_time")],
@@ -50,7 +49,7 @@ def save_new_business(user_pid, data):
                 end_at = data[3],
                 business_prop_id = business_pid
             )
-            save_changes(new_operation)
+            model_save_changes(new_operation)
         response_object = {
             'status': 'success',
             'message': 'Business successfully registered.',
@@ -106,16 +105,14 @@ def patch_a_business(public_id, user_pid, data):
     if business:
         if business.user_executive_id == user_pid:
             statement = business_type_table.delete().where(business_type_table.c.business_pid==business.public_id)
-            db.session.execute(statement)
-            db.session.commit()
+            table_save_changes(statement)
             for _type in data.get("_type"):
                 statement = business_type_table.insert().values(
                     public_id = str(uuid.uuid4()),
                     business_pid = business.public_id,
                     type_pid = _type["public_id"]
                 )
-                db.session.execute(statement)
-                db.session.commit()
+                table_save_changes(statement)
             business.name = data.get("name")
             business.bio = data.get("bio")
             business.photo = data.get("photo")
@@ -194,7 +191,3 @@ def get_a_business(public_id):
             executive_username = business[7],
             executive_photo = business[8]
         )
-
-def save_changes(data):
-    db.session.add(data)
-    db.session.commit()
