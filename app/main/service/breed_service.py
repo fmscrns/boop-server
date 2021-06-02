@@ -79,7 +79,7 @@ def delete_a_breed(public_id, data):
         else:
             response_object = {
                 'status': 'fail',
-                'message': 'bad request.'
+                'message': 'Bad request.'
             }
             return response_object, 400
     else:

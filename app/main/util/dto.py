@@ -72,10 +72,10 @@ class BusinessDto:
         ), required=True, description="business type"),
         "photo": fields.String(description="business profile photo filename"),
         "registered_on": fields.DateTime(description="creation date"),
-        "exec_id": fields.String(description="user identifier"),
-        "exec_name": fields.String(description="user name"),
-        "exec_username": fields.String(description="user username"),
-        "exec_photo": fields.String(description="user profile photo filename")
+        "executive_id": fields.String(description="user identifier"),
+        "executive_name": fields.String(description="user name"),
+        "executive_username": fields.String(description="user username"),
+        "executive_photo": fields.String(description="user profile photo filename")
     })
 
 class PostDto:
@@ -89,7 +89,9 @@ class PostDto:
         "creator_id": fields.String(description="user identifier"),
         "creator_name": fields.String(description="user name"),
         "creator_username": fields.String(description="user username"),
-        "creator_photo": fields.String(description="user profile photo filename")
+        "creator_photo": fields.String(description="user profile photo filename"),
+        "pinboard_id": fields.String(description="business identifier"),
+        "confiner_id": fields.String(description="circle identifier")
     })
 
 class BusinessTypeDto:
@@ -118,7 +120,8 @@ class CircleDto:
         "admin_id": fields.String(description="user identifier"),
         "admin_name": fields.String(description="user name"),
         "admin_username": fields.String(description="user username"),
-        "admin_photo": fields.String(description="user profile photo filename")
+        "admin_photo": fields.String(description="user profile photo filename"),
+        "visitor_auth": fields.Integer(description="visiting user authorization")
     })
 
 

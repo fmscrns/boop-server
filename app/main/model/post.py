@@ -10,6 +10,8 @@ class Post(db.Model):
     registered_on = db.Column(db.DateTime, nullable=False)
 
     user_creator_id = db.Column(db.String, db.ForeignKey("user.public_id"), nullable=False)
-    
+    business_pinboard_id = db.Column(db.String, db.ForeignKey("business.public_id"))
+    circle_confiner_id = db.Column(db.String, db.ForeignKey("circle.public_id"))
+
     def __repr__(self):
         return "<Post '{}'>".format(self.public_id)

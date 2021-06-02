@@ -3,7 +3,7 @@ from flask_restx import Resource
 
 from ..util.dto import PostDto
 from ..util.decorator import *
-from ..service.post_service import save_new_post,get_all_posts, get_all_posts_by_user, get_a_post, delete_a_post
+from ..service.post_service import save_new_post, get_all_posts, get_all_posts_by_user, get_a_post, delete_a_post, get_all_posts_by_business, get_all_posts_by_circle
 
 api = PostDto.api
 _post = PostDto.post
@@ -36,6 +36,26 @@ class PostListByUser(Resource):
     def get(self, user_pid, creator_id):
         """List all registered posts"""
         return get_all_posts_by_user(creator_id)
+
+@api.route('/pinboard/<pinboard_id>')
+@api.param("pinboard_id", "The Business public identifier")
+class PostListByBusiness(Resource):
+    @token_required
+    @api.doc('list_of_registered_posts')
+    @api.marshal_list_with(_post, envelope='data')
+    def get(self, user_pid, pinboard_id):
+        """List all registered posts"""
+        return get_all_posts_by_business(pinboard_id)
+
+@api.route('/confiner/<confiner_id>')
+@api.param("confiner_id", "The Circle public identifier")
+class PostListByCircle(Resource):
+    @token_required
+    @api.doc('list_of_registered_posts')
+    @api.marshal_list_with(_post, envelope='data')
+    def get(self, user_pid, confiner_id):
+        """List all registered posts"""
+        return get_all_posts_by_circle(confiner_id)
 
 @api.route('/<public_id>')
 @api.param('public_id', 'The Post identifier')

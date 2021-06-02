@@ -21,7 +21,7 @@ def save_new_business(user_pid, data):
             bio = data.get("bio"),
             photo = data.get("photo"),
             registered_on = datetime.datetime.utcnow(),
-            user_exec_id = user_pid
+            user_executive_id = user_pid
         )
         save_changes(new_business)
         for _type in data.get("_type"):
@@ -79,10 +79,10 @@ def get_all_businesses_by_user(user_pid):
             ],
             photo = business[3],
             registered_on = business[4],
-            exec_id = business[5],
-            exec_name = business[6],
-            exec_username = business[7],
-            exec_photo = business[8]
+            executive_id = business[5],
+            executive_name = business[6],
+            executive_username = business[7],
+            executive_photo = business[8]
         ) for business in db.session.query(
             Business.public_id,
             Business.name,
@@ -94,9 +94,9 @@ def get_all_businesses_by_user(user_pid):
             User.username,
             User.photo
         ).filter(
-            Business.user_exec_id == user_pid
+            Business.user_executive_id == user_pid
         ).filter(
-            Business.user_exec_id == User.public_id
+            Business.user_executive_id == User.public_id
         ).order_by(Business.registered_on.desc()).all()
     ]
 
@@ -104,7 +104,7 @@ def patch_a_business(public_id, user_pid, data):
     business = Business.query.filter_by(public_id=public_id).first()
 
     if business:
-        if business.user_exec_id == user_pid:
+        if business.user_executive_id == user_pid:
             statement = business_type_table.delete().where(business_type_table.c.business_pid==business.public_id)
             db.session.execute(statement)
             db.session.commit()
@@ -135,7 +135,7 @@ def patch_a_business(public_id, user_pid, data):
 def delete_a_business(public_id, user_pid, data):
     business = Business.query.filter_by(public_id=public_id).first()
     if business:
-        if business.user_exec_id == user_pid and data.get("name") == business.name:
+        if business.user_executive_id == user_pid and data.get("name") == business.name:
             db.session.delete(business)
             db.session.commit()
             response_object = {
@@ -173,7 +173,7 @@ def get_a_business(public_id):
     ).filter(
         Business.public_id == public_id
     ).filter(
-        Business.user_exec_id == User.public_id
+        Business.user_executive_id == User.public_id
     ).first()
 
     if business:
@@ -189,10 +189,10 @@ def get_a_business(public_id):
             ],
             photo = business[3],
             registered_on = business[4],
-            exec_id = business[5],
-            exec_name = business[6],
-            exec_username = business[7],
-            exec_photo = business[8]
+            executive_id = business[5],
+            executive_name = business[6],
+            executive_username = business[7],
+            executive_photo = business[8]
         )
 
 def save_changes(data):

@@ -4,6 +4,16 @@ from app.main.model.blacklist import BlacklistToken
 from ..config import key
 from .. import db, flask_bcrypt
 
+circle_member_table = db.Table('circle_member_table',
+    db.Column('id', db.Integer, primary_key=True, autoincrement=True),
+    db.Column('public_id', db.String(100), unique=True),
+    db.Column('circle_pid', db.String(100), db.ForeignKey('circle.public_id')),
+    db.Column('member_pid', db.String(100), db.ForeignKey('user.public_id')),
+    db.Column('is_accepted', db.Boolean, default=False),
+    db.Column('is_admin', db.Boolean, default=False),
+    db.Column('registered_on', db.DateTime, nullable=False, default=datetime.datetime.utcnow)
+)
+
 class User(db.Model):
     """ User Model for storing user related details """
     __tablename__ = "user"
@@ -20,7 +30,6 @@ class User(db.Model):
 
     owner_pet_rel = db.relationship('Pet', lazy=True)
     exec_business_rel = db.relationship('Business', lazy=True)
-    admin_circle_rel =db.relationship('Circle', lazy=True)
 
     @property
     def password(self):
@@ -30,7 +39,7 @@ class User(db.Model):
     def password(self, password):
         self.password_hash = flask_bcrypt.generate_password_hash(password).decode('utf-8')
 
-    def check_password(self, password):
+    def check_password(self, password): 
         return flask_bcrypt.check_password_hash(self.password_hash, password)
 
     def __repr__(self):

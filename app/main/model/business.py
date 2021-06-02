@@ -19,7 +19,7 @@ class Business(db.Model):
     bio = db.Column(db.String(100))
     photo = db.Column(db.String(50))
 
-    user_exec_id = db.Column(db.String, db.ForeignKey("user.public_id"), nullable=False) 
+    user_executive_id = db.Column(db.String, db.ForeignKey("user.public_id"), nullable=False) 
 
     prop_business_rel = db.relationship('BusinessType', secondary=business_type_table, lazy="joined")
     prop_operation_rel = db.relationship('BusinessOperation', cascade="all,delete", lazy="joined")

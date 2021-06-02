@@ -3,7 +3,9 @@ import datetime
 
 from app.main import db
 from app.main.model.post import Post
-from app.main.model.user import User
+from app.main.model.user import User, circle_member_table
+from app.main.model.business import Business
+from app.main.model.circle import Circle
 
 def save_new_post(user_pid, data):
     new_post = Post(
@@ -11,9 +13,55 @@ def save_new_post(user_pid, data):
         content = data.get("content"),
         photo = data.get("photo"),
         registered_on = datetime.datetime.utcnow(),
-        user_creator_id = user_pid
+        user_creator_id = user_pid,
     )
+
+    if data.get("pinboard_id"):
+        business = Business.query.filter_by(public_id=data["pinboard_id"]).first()
+        if business:
+            if business.user_executive_id == user_pid:
+                new_post.business_pinboard_id = data.get("pinboard_id")
+            else:
+                response_object = {
+                    'status': 'fail',
+                    'message': 'Unauthorized.'
+                }
+                return response_object, 401
+        else:
+            response_object = {
+                'status': 'fail',
+                'message': 'No business found.'
+            }
+            return response_object, 404
+
+    if data.get("confiner_id"):
+        circle = Circle.query.filter_by(public_id=data["confiner_id"]).first()
+        if circle:
+            member = db.session.query(
+                circle_member_table
+            ).filter(
+                circle_member_table.c.circle_pid==data["confiner_id"]
+            ).filter(
+                circle_member_table.c.member_pid==user_pid
+            ).first()
+        
+            if member:
+                new_post.circle_confiner_id = data.get("confiner_id")
+            else:
+                response_object = {
+                    'status': 'fail',
+                    'message': 'Unauthorized.'
+                }
+                return response_object, 401
+        else:
+            response_object = {
+                'status': 'fail',
+                'message': 'No circle found.'
+            }
+            return response_object, 404
+            
     save_changes(new_post)
+
     response_object = {
         'status': 'success',
         'message': 'Post successfully registered.',
@@ -43,6 +91,64 @@ def get_all_posts_by_user(user_pid):
             User.photo
         ).filter(
             Post.user_creator_id == user_pid
+        ).filter(
+            Post.business_pinboard_id == None
+        ).filter(
+            Post.circle_confiner_id == None
+        ).filter(
+            Post.user_creator_id == User.public_id
+        ).order_by(Post.registered_on.desc()).all()
+    ]
+
+def get_all_posts_by_business(business_pid):
+    return [
+        dict(
+            public_id = post[0],
+            content = post[1],
+            photo = post[2],
+            registered_on = post[3],
+            creator_id = post[4],
+            creator_name = post[5],
+            creator_username = post[6],
+            creator_photo = post[7]
+        ) for post in db.session.query(
+            Post.public_id,
+            Post.content,
+            Post.photo,
+            Post.registered_on,
+            User.public_id,
+            User.name,
+            User.username,
+            User.photo
+        ).filter(
+            Post.business_pinboard_id == business_pid
+        ).filter(
+            Post.user_creator_id == User.public_id
+        ).order_by(Post.registered_on.desc()).all()
+    ]
+
+def get_all_posts_by_circle(confiner_pid):
+    return [
+        dict(
+            public_id = post[0],
+            content = post[1],
+            photo = post[2],
+            registered_on = post[3],
+            creator_id = post[4],
+            creator_name = post[5],
+            creator_username = post[6],
+            creator_photo = post[7]
+        ) for post in db.session.query(
+            Post.public_id,
+            Post.content,
+            Post.photo,
+            Post.registered_on,
+            User.public_id,
+            User.name,
+            User.username,
+            User.photo
+        ).filter(
+            Post.circle_confiner_id == confiner_pid
         ).filter(
             Post.user_creator_id == User.public_id
         ).order_by(Post.registered_on.desc()).all()
