@@ -206,7 +206,17 @@ def get_a_circle(user_pid, public_id):
             admin_name = circle[6],
             admin_username = circle[7],
             admin_photo = circle[8],
-            visitor_auth = 2 if db.session.query(
+            visitor_auth = 3 if db.session.query(
+                circle_member_table
+            ).filter(
+                circle_member_table.c.circle_pid == public_id
+            ).filter(
+                circle_member_table.c.is_admin == True
+            ).filter(
+                circle_member_table.c.member_pid == user_pid
+            ).filter(
+                circle_member_table.c.is_accepted == True
+            ).first() else 2 if db.session.query(
                 circle_member_table
             ).filter(
                 circle_member_table.c.circle_pid == public_id

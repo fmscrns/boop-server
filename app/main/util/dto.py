@@ -43,18 +43,24 @@ class PetDto:
         "name": fields.String(required=True, description="pet name"),
         "bio": fields.String(description="pet biography"),
         "birthday": fields.DateTime(dt_format="rfc822", description="pet birthday"),
-        "sex": fields.Integer(required=True, description="pet sex"),
-        "status": fields.Integer(required=True, description="pet status"),
+        "sex": fields.Integer(required=True, description="pet sex", min=-1, max=1),
+        "status": fields.Integer(required=True, description="pet status", min=-1, max=2),
+        "is_private": fields.Integer(required=True, description="pet privacy", min=-1, max=1),
         "photo": fields.String(description="pet profile photo filename"),
         "registered_on": fields.DateTime(description="creation date"),
-        "owner_id": fields.String(description="user identifier"),
-        "owner_name": fields.String(description="user name"),
-        "owner_username": fields.String(description="user username"),
-        "owner_photo": fields.String(description="user profile photo filename"),
-        "group_id": fields.String(required=True, description="specie identifier"),
         "group_name": fields.String(description="specie name"),
         "subgroup_id": fields.String(required=True, description="breed identifier"),
-        "subgroup_name": fields.String(description="breed name")
+        "subgroup_name": fields.String(description="breed name"),
+        "owner": fields.List(fields.Nested(
+            api.model("owner", {
+                "public_id": fields.String(description="user identifier", attribute="owner_id"),
+                "name": fields.String(description="user name", attribute="owner_name"),
+                "username": fields.String(description="user username", attribute="owner_username"),
+                "photo": fields.String(description="user profile photo filename", attribute="owner_photo"),
+            })
+        ), description="pet owner"),
+        "visitor_auth": fields.Integer(description="visiting user authorization"),
+        
     })
 
 class BusinessDto:
@@ -91,7 +97,16 @@ class PostDto:
         "creator_username": fields.String(description="user username"),
         "creator_photo": fields.String(description="user profile photo filename"),
         "pinboard_id": fields.String(description="business identifier"),
-        "confiner_id": fields.String(description="circle identifier")
+        "pinboard_name": fields.String(description="business name"),
+        "confiner_id": fields.String(description="circle identifier"),
+        "confiner_name": fields.String(description="circle name"),
+        "subject": fields.List(fields.Nested(
+            api.model("subject", {
+                "public_id": fields.String(description="pet identifier", attribute="subject_id"),
+                "name": fields.String(description="pet name", attribute="subject_name"),
+                "photo": fields.String(description="pet profile photo filename", attribute="subject_photo")
+            })
+        ), description="post subject"),
     })
 
 class BusinessTypeDto:

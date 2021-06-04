@@ -14,6 +14,16 @@ circle_member_table = db.Table('circle_member_table',
     db.Column('registered_on', db.DateTime, nullable=False, default=datetime.datetime.utcnow)
 )
 
+pet_follower_table = db.Table('pet_follower_table',
+    db.Column('id', db.Integer, primary_key=True, autoincrement=True),
+    db.Column('public_id', db.String(100), unique=True),
+    db.Column('pet_pid', db.String(100), db.ForeignKey('pet.public_id')),
+    db.Column('follower_pid', db.String(100), db.ForeignKey('user.public_id')),
+    db.Column('is_owner', db.Boolean, default=False),
+    db.Column('is_accepted', db.Boolean, default=False),
+    db.Column('registered_on', db.DateTime, nullable=False, default=datetime.datetime.utcnow)
+)
+
 class User(db.Model):
     """ User Model for storing user related details """
     __tablename__ = "user"
@@ -28,7 +38,6 @@ class User(db.Model):
     username = db.Column(db.String(50), unique=True)
     password_hash = db.Column(db.String(100))
 
-    owner_pet_rel = db.relationship('Pet', lazy=True)
     exec_business_rel = db.relationship('Business', lazy=True)
 
     @property

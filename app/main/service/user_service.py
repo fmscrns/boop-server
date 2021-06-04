@@ -41,9 +41,7 @@ def get_by_email(email):
     return User.query.filter_by(email=email).first() 
 
 def get_by_username(username):
-    user = User.query.filter_by(username=username).first() 
-    if user.admin is False:
-        return user
+    return User.query.filter_by(username=username).first() 
 
 def get_by_token(auth_token):
     decoded_resp = User.decode_auth_token(auth_token)

@@ -1,13 +1,14 @@
 from flask import request
 from flask_restx import Resource
 
-from ..util.dto import PetDto
+from ..util.dto import PetDto, UserDto
 from ..util.decorator import *
 from ..service.pet_service import save_new_pet, get_all_pets_by_user, get_a_pet, patch_a_pet, delete_a_pet
+from ..service.petFollower_service import get_all_pet_followers, create_pet_follower, delete_pet_follower, accept_pet_follower
 
 api = PetDto.api
 _pet = PetDto.pet
-
+_user = UserDto.user
 
 @api.route('/')
 class PetList(Resource):
@@ -35,7 +36,7 @@ class PetListByUser(Resource):
     @api.marshal_list_with(_pet, envelope='data')
     def get(self, user_pid, owner_id):
         """List all registered pets"""
-        return get_all_pets_by_user(owner_id)
+        return get_all_pets_by_user(user_pid, owner_id, request.args.get("tag_suggestions"))
 
 @api.route('/<public_id>')
 @api.param('public_id', 'The Pet identifier')
@@ -46,7 +47,7 @@ class Pet(Resource):
     @api.marshal_with(_pet)
     def get(self, user_pid, public_id):
         """get a pet given its identifier"""
-        pet = get_a_pet(public_id)
+        pet = get_a_pet(user_pid, public_id)
         if not pet:
             api.abort(404)
         else:
@@ -67,3 +68,40 @@ class Pet(Resource):
     def delete(self, user_pid, public_id):
         """delete a pet given its identifier"""
         return delete_a_pet(public_id, user_pid, request.json)
+
+@api.route('/<public_id>/follower/')
+@api.param('public_id', 'The Pet identifier')
+@api.response(404, 'Pet not found.')
+class PetFollowerList(Resource):
+    @token_required
+    @api.doc('list_of_registered_pet_followers')
+    @api.marshal_list_with(_user, envelope='data')
+    def get(self, user_pid, public_id):
+        """List all registered pet followers"""
+        return get_all_pet_followers(public_id, request.args.get("type"))
+
+    @token_required
+    @api.response(201, 'Pet successfully followed.')
+    @api.doc('create pet follower')
+    def post(self, user_pid, public_id):
+        """create pet follower given pet identifier"""
+        return create_pet_follower(user_pid, public_id)
+
+@api.route('/<public_id>/follower/<follower_id>')
+@api.param('public_id', 'The Pet identifier')
+@api.param('follower_id', 'The User identifier')
+@api.response(404, 'Circle not found.')
+class PetFollower(Resource):
+    @token_required
+    @api.response(201, 'Pet follower successfully accepted.')
+    @api.doc('accept pet follower')
+    def post(self, user_pid, public_id, follower_id):
+        """accept pet follower given pet identifier"""
+        return accept_pet_follower(user_pid, public_id, follower_id)
+
+    @token_required
+    @api.response(201, 'Pet successfully unfollowed.')
+    @api.doc('delete pet follower given pet identifier')
+    def delete(self, user_pid, public_id, follower_id):
+        """delete a pet given its identifier"""
+        return delete_pet_follower(user_pid, public_id, follower_id, request.json)
