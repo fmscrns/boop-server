@@ -3,7 +3,7 @@ from flask_restx import Resource
 
 from ..util.dto import PostDto
 from ..util.decorator import *
-from ..service.post_service import save_new_post, get_all_posts, get_all_posts_by_user, get_a_post, delete_a_post, get_all_posts_by_business, get_all_posts_by_circle
+from ..service.post_service import save_new_post, get_all_posts, get_all_posts_by_user, get_a_post, delete_a_post, get_all_posts_by_business, get_all_posts_by_circle, get_all_posts_by_pet
 
 api = PostDto.api
 _post = PostDto.post
@@ -36,7 +36,17 @@ class PostListByUser(Resource):
     @api.marshal_list_with(_post, envelope='data')
     def get(self, user_pid, creator_id):
         """List all registered posts"""
-        return get_all_posts_by_user(creator_id)
+        return get_all_posts_by_user(user_pid, creator_id)
+
+@api.route('/subject/<subject_id>')
+@api.param("subject_id", "The Pet public identifier")
+class PostListByPet(Resource):
+    @token_required
+    @api.doc('list_of_registered_posts')
+    @api.marshal_list_with(_post, envelope='data')
+    def get(self, user_pid, subject_id):
+        """List all registered posts"""
+        return get_all_posts_by_pet(user_pid, subject_id)
 
 @api.route('/pinboard/<pinboard_id>')
 @api.param("pinboard_id", "The Business public identifier")
