@@ -26,7 +26,7 @@ def create_circle_member(user_pid, public_id):
             table_save_changes(statement)
             response_object = {
                 'status': 'success',
-                'message': 'Circle member successfully registered.'
+                'message': 'Wait to be accepted by the admin.'
             }
             return response_object, 201
         else:

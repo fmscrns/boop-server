@@ -1,5 +1,6 @@
 from .. import db
 from .pet import post_subject_table
+from datetime import datetime
 
 class Post(db.Model):
     __tablename__ = "post"
