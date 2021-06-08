@@ -64,6 +64,64 @@ def get_all_pet_followers(pet_pid, type):
         }
         return response_object, 404
 
+def create_pet_owner(user_pid, pet_pid, data):
+    pet = Pet.query.filter_by(public_id=pet_pid).first()
+    if pet:
+        user = User.query.filter_by(public_id=data.get("public_id")).first()
+        admin = db.session.query(
+            pet_follower_table
+        ).filter(
+            pet_follower_table.c.follower_pid == user_pid
+        ).filter(
+            pet_follower_table.c.pet_pid == pet_pid
+        ).filter(
+            pet_follower_table.c.is_owner == True
+        ).first()
+
+        if user and admin:
+            owner = db.session.query(
+                pet_follower_table
+            ).filter(
+                pet_follower_table.c.follower_pid == data.get("public_id")
+            ).filter(
+                pet_follower_table.c.pet_pid == pet_pid
+            ).filter(
+                pet_follower_table.c.is_owner == True
+            ).first()
+
+            if not owner:
+                statement = pet_follower_table.insert().values(
+                    public_id=str(uuid.uuid4()),
+                    follower_pid=data.get("public_id"),
+                    pet_pid=pet_pid,
+                    is_accepted=True,
+                    is_owner=True
+                )
+                table_save_changes(statement)
+                response_object = {
+                    'status': 'success',
+                    'message': 'Pet successfully have new owner.'
+                }
+                return response_object, 201
+            else:
+                response_object = {
+                    'status': 'fail',
+                    'message': 'User is already an owner of the pet.',
+                }
+                return response_object, 409
+        else:
+            response_object = {
+                'status': 'fail',
+                'message': 'User does not exist.',
+            }
+            return response_object, 404
+    else:
+        response_object = {
+            'status': 'fail',
+            'message': 'No pet found.'
+        }
+        return response_object, 404
+
 def delete_pet_follower(user_pid, pet_pid, follower_pid, data):
     pet = Pet.query.filter_by(public_id=pet_pid).first()
     if pet:

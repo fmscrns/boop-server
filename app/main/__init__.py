@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
@@ -16,7 +17,7 @@ def create_app(config_name):
 
     @app.after_request
     def after_request(response):
-        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Origin", "https://boop-proj-client.herokuapp.com" if os.getenv('BOILERPLATE_ENV') == "prod" else "*")
         response.headers.add("Access-Control-Allow-Headers", "Authorization")
 
         return response

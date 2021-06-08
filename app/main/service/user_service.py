@@ -1,9 +1,8 @@
 import uuid
 import datetime
-
+from sqlalchemy import or_
 from app.main import db
 from app.main.model.user import User
-
 
 def save_new_user(data, admin=False):
     user = User.query.filter_by(email=data['email']).first()
@@ -33,6 +32,27 @@ def save_new_user(data, admin=False):
 def get_all_users():
     return User.query.all()
 
+def get_all_by_search(value):
+    return [
+        dict(
+            public_id = user[0],
+            name = user[1],
+            username = user[2],
+            photo = user[3]
+        ) for user in db.session.query(
+            User.public_id,
+            User.name,
+            User.username,
+            User.photo
+        ).filter(
+            or_(User.name.ilike("%{}%".format(value)),
+            User.username.ilike("%{}%".format(value)))
+        ).filter(
+            User.admin != True
+        # ).filter(
+        #     User.username.ilike("%{}%".format(value))
+        ).all()
+    ]
 
 def get_a_user(public_id):
     return User.query.filter_by(public_id=public_id).first()

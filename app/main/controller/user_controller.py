@@ -3,7 +3,7 @@ from flask_restx import Resource
 
 from ..util.dto import UserDto
 from ..util.decorator import *
-from ..service.user_service import save_new_user, get_all_users, get_a_user, get_by_email, get_by_username, patch_a_user, get_by_token
+from ..service.user_service import save_new_user, get_all_users, get_a_user, get_by_email, get_by_username, patch_a_user, get_by_token, get_all_by_search
 
 api = UserDto.api
 _user = UserDto.user
@@ -11,12 +11,12 @@ _user = UserDto.user
 
 @api.route('/')
 class UserList(Resource):
-    @admin_token_required
+    @token_required
     @api.doc('list_of_registered_users')
     @api.marshal_list_with(_user, envelope='data')
-    def get(self):
-        """List all registered users"""
-        return get_all_users()
+    def get(self, user_pid):
+        """List registered users"""
+        return get_all_by_search(request.args.get("search"))
 
     @api.response(201, 'User successfully created.')
     @api.doc('create a new user')

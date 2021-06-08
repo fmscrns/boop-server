@@ -7,7 +7,7 @@ class UserDto:
         'name': fields.String(required=True, description='user name'),
         'email': fields.String(required=True, description='user email address', pattern='^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'),
         'username': fields.String(required=True, description='user username'),
-        'password': fields.String(required=True, description='user password'),
+        'password': fields.String(required=True, description='user password', pattern='^(?!\s*$).+'),
         'public_id': fields.String(description='user Identifier'),
         "photo": fields.String(description="user profile photo"),
     })
