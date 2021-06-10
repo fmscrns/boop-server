@@ -4,7 +4,7 @@ from flask_restx import Resource
 from ..util.dto import PetDto, UserDto
 from ..util.decorator import *
 from ..service.pet_service import save_new_pet, get_all_pets_by_user, get_a_pet, patch_a_pet, delete_a_pet
-from ..service.petFollower_service import create_pet_owner, get_all_pet_followers, create_pet_follower, delete_pet_follower, accept_pet_follower
+from ..service.petFollower_service import create_pet_owner, get_all_pet_followers, create_pet_follower, delete_pet_follower, accept_pet_follower, delete_pet_owner
 
 api = PetDto.api
 _pet = PetDto.pet
@@ -124,21 +124,14 @@ class PetOwnerList(Resource):
         """create pet owner given pet identifier"""
         return create_pet_owner(user_pid, public_id, request.json)
 
-# @api.route('/<public_id>/owner/<owner_id>')
-# @api.param('public_id', 'The Pet identifier')
-# @api.param('owner_id', 'The User identifier')
-# @api.response(404, 'Circle not found.')
-# class PetOwner(Resource):
-    # @token_required
-    # @api.response(201, 'Pet follower successfully accepted.')
-    # @api.doc('accept pet follower')
-    # def post(self, user_pid, public_id, owner_id):
-    #     """accept pet follower given pet identifier"""
-    #     return accept_pet_follower(user_pid, public_id, owner_id)
-
-    # @token_required
-    # @api.response(201, 'Pet successfully unfollowed.')
-    # @api.doc('delete pet follower given pet identifier')
-    # def delete(self, user_pid, public_id, follower_id):
-    #     """delete a pet given its identifier"""
-    #     return delete_pet_follower(user_pid, public_id, follower_id, request.json)
+@api.route('/<public_id>/owner/<owner_id>')
+@api.param('public_id', 'The Pet identifier')
+@api.param('owner_id', 'The User identifier')
+@api.response(404, 'Circle not found.')
+class PetOwner(Resource):
+    @token_required
+    @api.response(201, 'Pet owner successfully removed.')
+    @api.doc('remove pet owner given pet identifier')
+    def delete(self, user_pid, public_id, owner_id):
+        """delete a pet given its identifier"""
+        return delete_pet_owner(user_pid, public_id, owner_id, request.json)

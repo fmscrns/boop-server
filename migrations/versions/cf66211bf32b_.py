@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 5abdb8bddf38
+Revision ID: cf66211bf32b
 Revises: 
-Create Date: 2021-05-12 10:40:00.795090
+Create Date: 2021-06-04 20:05:06.475890
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '5abdb8bddf38'
+revision = 'cf66211bf32b'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,6 +30,16 @@ def upgrade():
     sa.Column('public_id', sa.String(length=100), nullable=False),
     sa.Column('name', sa.String(length=50), nullable=False),
     sa.Column('registered_on', sa.DateTime(), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('public_id')
+    )
+    op.create_table('circle',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('public_id', sa.String(length=100), nullable=False),
+    sa.Column('name', sa.String(length=50), nullable=False),
+    sa.Column('registered_on', sa.DateTime(), nullable=False),
+    sa.Column('bio', sa.String(length=100), nullable=True),
+    sa.Column('photo', sa.String(length=50), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('public_id')
     )
@@ -83,31 +93,32 @@ def upgrade():
     sa.Column('registered_on', sa.DateTime(), nullable=False),
     sa.Column('bio', sa.String(length=100), nullable=True),
     sa.Column('photo', sa.String(length=50), nullable=True),
-    sa.Column('user_exec_id', sa.String(), nullable=False),
-    sa.ForeignKeyConstraint(['user_exec_id'], ['user.public_id'], ),
+    sa.Column('user_executive_id', sa.String(), nullable=False),
+    sa.ForeignKeyConstraint(['user_executive_id'], ['user.public_id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('public_id')
     )
-    op.create_table('circle',
+    op.create_table('circle_member_table',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('public_id', sa.String(length=100), nullable=False),
-    sa.Column('name', sa.String(length=50), nullable=False),
+    sa.Column('public_id', sa.String(length=100), nullable=True),
+    sa.Column('circle_pid', sa.String(length=100), nullable=True),
+    sa.Column('member_pid', sa.String(length=100), nullable=True),
+    sa.Column('is_accepted', sa.Boolean(), nullable=True),
+    sa.Column('is_admin', sa.Boolean(), nullable=True),
     sa.Column('registered_on', sa.DateTime(), nullable=False),
-    sa.Column('bio', sa.String(length=100), nullable=True),
-    sa.Column('photo', sa.String(length=50), nullable=True),
-    sa.Column('user_admin_id', sa.String(), nullable=False),
-    sa.ForeignKeyConstraint(['user_admin_id'], ['user.public_id'], ),
+    sa.ForeignKeyConstraint(['circle_pid'], ['circle.public_id'], ),
+    sa.ForeignKeyConstraint(['member_pid'], ['user.public_id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('public_id')
     )
-    op.create_table('post',
+    op.create_table('circle_type_table',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('public_id', sa.String(length=100), nullable=False),
-    sa.Column('content', sa.String(length=400), nullable=True),
-    sa.Column('photo', sa.String(length=50), nullable=True),
+    sa.Column('public_id', sa.String(length=100), nullable=True),
+    sa.Column('circle_pid', sa.String(length=100), nullable=True),
+    sa.Column('type_pid', sa.String(length=100), nullable=True),
     sa.Column('registered_on', sa.DateTime(), nullable=False),
-    sa.Column('user_creator_id', sa.String(), nullable=False),
-    sa.ForeignKeyConstraint(['user_creator_id'], ['user.public_id'], ),
+    sa.ForeignKeyConstraint(['circle_pid'], ['circle.public_id'], ),
+    sa.ForeignKeyConstraint(['type_pid'], ['circle_type.public_id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('public_id')
     )
@@ -134,17 +145,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('public_id')
     )
-    op.create_table('circle_type_table',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('public_id', sa.String(length=100), nullable=True),
-    sa.Column('circle_pid', sa.String(length=100), nullable=True),
-    sa.Column('type_pid', sa.String(length=100), nullable=True),
-    sa.Column('registered_on', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['circle_pid'], ['circle.public_id'], ),
-    sa.ForeignKeyConstraint(['type_pid'], ['circle_type.public_id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('public_id')
-    )
     op.create_table('pet',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('public_id', sa.String(length=100), nullable=False),
@@ -155,12 +155,50 @@ def upgrade():
     sa.Column('status', sa.Integer(), nullable=False),
     sa.Column('photo', sa.String(length=50), nullable=True),
     sa.Column('registered_on', sa.DateTime(), nullable=False),
-    sa.Column('user_owner_id', sa.String(), nullable=False),
+    sa.Column('is_private', sa.Integer(), nullable=False),
     sa.Column('specie_group_id', sa.String(), nullable=False),
     sa.Column('breed_subgroup_id', sa.String(), nullable=False),
     sa.ForeignKeyConstraint(['breed_subgroup_id'], ['breed.public_id'], ),
     sa.ForeignKeyConstraint(['specie_group_id'], ['specie.public_id'], ),
-    sa.ForeignKeyConstraint(['user_owner_id'], ['user.public_id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('public_id')
+    )
+    op.create_table('post',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('public_id', sa.String(length=100), nullable=False),
+    sa.Column('content', sa.String(length=400), nullable=True),
+    sa.Column('photo', sa.String(length=50), nullable=True),
+    sa.Column('registered_on', sa.DateTime(), nullable=False),
+    sa.Column('user_creator_id', sa.String(), nullable=False),
+    sa.Column('business_pinboard_id', sa.String(), nullable=True),
+    sa.Column('circle_confiner_id', sa.String(), nullable=True),
+    sa.ForeignKeyConstraint(['business_pinboard_id'], ['business.public_id'], ),
+    sa.ForeignKeyConstraint(['circle_confiner_id'], ['circle.public_id'], ),
+    sa.ForeignKeyConstraint(['user_creator_id'], ['user.public_id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('public_id')
+    )
+    op.create_table('pet_follower_table',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('public_id', sa.String(length=100), nullable=True),
+    sa.Column('pet_pid', sa.String(length=100), nullable=True),
+    sa.Column('follower_pid', sa.String(length=100), nullable=True),
+    sa.Column('is_owner', sa.Boolean(), nullable=True),
+    sa.Column('is_accepted', sa.Boolean(), nullable=True),
+    sa.Column('registered_on', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['follower_pid'], ['user.public_id'], ),
+    sa.ForeignKeyConstraint(['pet_pid'], ['pet.public_id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('public_id')
+    )
+    op.create_table('post_subject_table',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('public_id', sa.String(length=100), nullable=True),
+    sa.Column('post_pid', sa.String(length=100), nullable=True),
+    sa.Column('subject_pid', sa.String(length=100), nullable=True),
+    sa.Column('registered_on', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['post_pid'], ['post.public_id'], ),
+    sa.ForeignKeyConstraint(['subject_pid'], ['pet.public_id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('public_id')
     )
@@ -169,17 +207,20 @@ def upgrade():
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('post_subject_table')
+    op.drop_table('pet_follower_table')
+    op.drop_table('post')
     op.drop_table('pet')
-    op.drop_table('circle_type_table')
     op.drop_table('business_type_table')
     op.drop_table('business_operation')
-    op.drop_table('post')
-    op.drop_table('circle')
+    op.drop_table('circle_type_table')
+    op.drop_table('circle_member_table')
     op.drop_table('business')
     op.drop_table('breed')
     op.drop_table('user')
     op.drop_table('specie')
     op.drop_table('circle_type')
+    op.drop_table('circle')
     op.drop_table('business_type')
     op.drop_table('blacklist_token')
     # ### end Alembic commands ###

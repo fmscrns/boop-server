@@ -26,7 +26,7 @@ def create_circle_member(user_pid, public_id):
             table_save_changes(statement)
             response_object = {
                 'status': 'success',
-                'message': 'Circle member successfully registered.'
+                'message': 'Wait to be accepted by the admin.'
             }
             return response_object, 201
         else:
@@ -76,7 +76,7 @@ def delete_circle_member(user_pid, public_id, member_id, data):
         ).scalar()
 
         if requestor and target_member:
-            admin = db.session.query(
+            admin_requestor = db.session.query(
                 circle_member_table
             ).filter(
                 circle_member_table.c.circle_pid == public_id
@@ -86,37 +86,8 @@ def delete_circle_member(user_pid, public_id, member_id, data):
                 circle_member_table.c.is_admin == True
             ).first()
 
-            if admin:
-                if user_pid == member_id:
-                    # ADMIN KICKS HIMSELF
-                    if admin_list_length != 1:
-                        statement = circle_member_table.delete().where(
-                            circle_member_table.c.member_pid==member_id
-                        ).where(
-                            circle_member_table.c.circle_pid==public_id
-                        )
-                        table_save_changes(statement)
-                        response_object = {
-                            'status': 'success',
-                            'message': 'Circle member successfully deleted.'
-                        }
-                        return response_object, 201
-                    elif member_list_length == 1:
-                        statement = circle_member_table.delete().where(
-                            circle_member_table.c.member_pid==member_id
-                        ).where(
-                            circle_member_table.c.circle_pid==public_id
-                        )
-                        table_save_changes(statement)
-
-                        circle_service.delete_a_circle(public_id, user_pid, data)
-                    else:
-                        response_object = {
-                            'status': 'fail',
-                            'message': 'Circle must have another admin before deletion.'
-                        }
-                        return response_object, 403
-                else:
+            if admin_requestor:
+                if admin_list_length != 1:
                     statement = circle_member_table.delete().where(
                         circle_member_table.c.member_pid==member_id
                     ).where(
@@ -128,6 +99,8 @@ def delete_circle_member(user_pid, public_id, member_id, data):
                         'message': 'Circle member successfully deleted.'
                     }
                     return response_object, 201
+                else:
+                    return circle_service.delete_a_circle(public_id, user_pid, data)
             elif user_pid == member_id:
                 statement = circle_member_table.delete().where(
                     circle_member_table.c.member_pid==member_id
@@ -143,9 +116,9 @@ def delete_circle_member(user_pid, public_id, member_id, data):
             else:
                 response_object = {
                     'status': 'fail',
-                    'message': 'Request unauthorized.'
+                    'message': 'Forbidden.'
                 }
-                return response_object, 401
+                return response_object, 403
         else:
             response_object = {
                 'status': 'fail',

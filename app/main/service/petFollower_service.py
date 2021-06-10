@@ -1,9 +1,14 @@
+import re
 from flask.globals import request
 from app.main.service import table_save_changes
 import uuid
 from app.main import db
 from app.main.model.pet import Pet
 from app.main.model.user import User, pet_follower_table
+from .pet_service import delete_a_pet
+from sqlalchemy import func
+
+from app.main.service import pet_service
 
 def create_pet_follower(user_pid, pet_pid):
     pet = Pet.query.filter_by(public_id=pet_pid).first()
@@ -26,7 +31,7 @@ def create_pet_follower(user_pid, pet_pid):
             table_save_changes(statement)
             response_object = {
                 'status': 'success',
-                'message': 'Pet successfully followed.'
+                'message': 'Pet successfully followed.' if pet.is_private == 0 else "Awaiting owner's approval."
             }
             return response_object, 201
         else:
@@ -115,6 +120,66 @@ def create_pet_owner(user_pid, pet_pid, data):
                 'message': 'User does not exist.',
             }
             return response_object, 404
+    else:
+        response_object = {
+            'status': 'fail',
+            'message': 'No pet found.'
+        }
+        return response_object, 404
+
+def delete_pet_owner(user_pid, pet_pid, owner_id, data):
+    pet = Pet.query.filter_by(public_id=pet_pid).first()
+    if pet:
+        requestor = db.session.query(
+            pet_follower_table
+        ).filter(
+            pet_follower_table.c.follower_pid == user_pid
+        ).filter(
+            pet_follower_table.c.pet_pid == pet_pid
+        ).filter(
+            pet_follower_table.c.is_owner == True
+        ).first()
+
+        target_owner = db.session.query(
+            pet_follower_table
+        ).filter(
+            pet_follower_table.c.follower_pid == owner_id
+        ).filter(
+            pet_follower_table.c.pet_pid == pet_pid
+        ).filter(
+            pet_follower_table.c.is_owner == True
+        ).first()
+
+        owner_list_length = db.session.query(
+            func.count(pet_follower_table.c.public_id)
+        ).filter(
+            pet_follower_table.c.pet_pid == pet_pid
+        ).filter(
+            pet_follower_table.c.is_owner == True
+        ).scalar()
+        if requestor and target_owner:
+            if owner_list_length != 1:
+                statement = pet_follower_table.update().where(
+                    pet_follower_table.c.follower_pid==owner_id
+                ).where(
+                    pet_follower_table.c.pet_pid==pet_pid
+                ).values(
+                    is_owner = False
+                )
+                table_save_changes(statement)
+                response_object = {
+                    'status': 'success',
+                    'message': 'Pet owner successfully removed.'
+                }
+                return response_object, 201
+            else:
+                return pet_service.delete_a_pet(pet_pid, user_pid, data)
+        else:
+            response_object = {
+                'status': 'fail',
+                'message': 'Forbidden.',
+            }
+            return response_object, 403
     else:
         response_object = {
             'status': 'fail',
