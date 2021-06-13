@@ -40,7 +40,7 @@ class BusinessListByUser(Resource):
     @api.marshal_list_with(_business, envelope='data')
     def get(self, user_pid, exec_id):
         """List all registered businesses"""
-        return get_all_businesses_by_user(exec_id)
+        return get_all_businesses_by_user(user_pid, exec_id)
 
 @api.route('/<public_id>')
 @api.param('public_id', 'The Business identifier')
@@ -63,7 +63,6 @@ class Business(Resource):
     @api.expect(_business, validate=True)
     def patch(self, user_pid, public_id):
         """patch a business given its identifier"""
-        print("HELLO")
         return patch_a_business(public_id, user_pid, request.json)
 
     @token_required

@@ -84,17 +84,37 @@ def create_pet_owner(user_pid, pet_pid, data):
         ).first()
 
         if user and admin:
-            owner = db.session.query(
+            follower = db.session.query(
                 pet_follower_table
             ).filter(
                 pet_follower_table.c.follower_pid == data.get("public_id")
             ).filter(
                 pet_follower_table.c.pet_pid == pet_pid
-            ).filter(
-                pet_follower_table.c.is_owner == True
             ).first()
 
-            if not owner:
+            if follower:
+                if follower[4] == False:
+                    statement = pet_follower_table.update().where(
+                        pet_follower_table.c.follower_pid==data.get("public_id")
+                    ).where(
+                        pet_follower_table.c.pet_pid==pet_pid
+                    ).values(
+                        is_owner = True,
+                        is_accepted = True
+                    )
+                    table_save_changes(statement)
+                    response_object = {
+                        'status': 'success',
+                        'message': 'Pet successfully have new owner.'
+                    }
+                    return response_object, 201
+                else:
+                    response_object = {
+                        'status': 'fail',
+                        'message': 'User is already an owner of the pet.',
+                    }
+                    return response_object, 409
+            else:
                 statement = pet_follower_table.insert().values(
                     public_id=str(uuid.uuid4()),
                     follower_pid=data.get("public_id"),
@@ -108,18 +128,12 @@ def create_pet_owner(user_pid, pet_pid, data):
                     'message': 'Pet successfully have new owner.'
                 }
                 return response_object, 201
-            else:
-                response_object = {
-                    'status': 'fail',
-                    'message': 'User is already an owner of the pet.',
-                }
-                return response_object, 409
         else:
             response_object = {
                 'status': 'fail',
-                'message': 'User does not exist.',
+                'message': 'Forbidden.',
             }
-            return response_object, 404
+            return response_object, 403
     else:
         response_object = {
             'status': 'fail',
@@ -187,7 +201,7 @@ def delete_pet_owner(user_pid, pet_pid, owner_id, data):
         }
         return response_object, 404
 
-def delete_pet_follower(user_pid, pet_pid, follower_pid, data):
+def delete_pet_follower(user_pid, pet_pid, follower_pid):
     pet = Pet.query.filter_by(public_id=pet_pid).first()
     if pet:
         requestor = db.session.query(
@@ -249,6 +263,12 @@ def delete_pet_follower(user_pid, pet_pid, follower_pid, data):
                     'message': 'Request unauthorized.'
                 }
                 return response_object, 401
+        else:
+            response_object = {
+                'status': 'fail',
+                'message': 'User is not following this pet.',
+            }
+            return response_object, 404
 
 def accept_pet_follower(user_pid, pet_pid, follower_pid):
     pet = Pet.query.filter_by(public_id=pet_pid).first()

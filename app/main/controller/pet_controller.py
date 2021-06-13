@@ -12,13 +12,6 @@ _user = UserDto.user
 
 @api.route('/')
 class PetList(Resource):
-    # @admin_token_required
-    # @api.doc('list_of_registered_pets')
-    # @api.marshal_list_with(_pet, envelope='data')
-    # def get(self):
-    #     """List all registered pets"""
-    #     return get_all_pets()
-
     @token_required
     @api.response(201, 'Pet successfully created.')
     @api.doc('create a new pet')
@@ -104,19 +97,12 @@ class PetFollower(Resource):
     @api.doc('delete pet follower given pet identifier')
     def delete(self, user_pid, public_id, follower_id):
         """delete a pet given its identifier"""
-        return delete_pet_follower(user_pid, public_id, follower_id, request.json)
+        return delete_pet_follower(user_pid, public_id, follower_id)
 
 @api.route('/<public_id>/owner/')
 @api.param('public_id', 'The Pet identifier')
 @api.response(404, 'Pet not found.')
 class PetOwnerList(Resource):
-    # @token_required
-    # @api.doc('list_of_registered_pet_owners')
-    # @api.marshal_list_with(_user, envelope='data')
-    # def get(self, user_pid, public_id):
-    #     """List all registered pet followers"""
-    #     return get_all_pet_owners(public_id)
-
     @token_required
     @api.response(201, 'Pet successfully have new owner.')
     @api.doc('create pet owner')

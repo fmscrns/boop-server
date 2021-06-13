@@ -132,12 +132,15 @@ class CircleDto:
         ), required=True, description="circle type"),
         "photo": fields.String(description="circle profile photo filename"),
         "registered_on": fields.DateTime(dt_format="rfc822", required=False, description="creation date"),
-        "admin_id": fields.String(description="user identifier"),
-        "admin_name": fields.String(description="user name"),
-        "admin_username": fields.String(description="user username"),
-        "admin_photo": fields.String(description="user profile photo filename"),
-        "visitor_auth": fields.Integer(description="visiting user authorization"),
-        "member_count": fields.Integer(description="member count")
+        "admin": fields.List(fields.Nested(
+            api.model("admin", {
+                "public_id": fields.String(description="user identifier", attribute="admin_id"),
+                "name": fields.String(description="user name", attribute="admin_name"),
+                "username": fields.String(description="user username", attribute="admin_username"),
+                "photo": fields.String(description="user profile photo filename", attribute="admin_photo"),
+            })
+        ), description="circle admin"),
+        "visitor_auth": fields.Integer(description="visiting user authorization")
     })
 
 

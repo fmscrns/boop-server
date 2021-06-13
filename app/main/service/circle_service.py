@@ -1,6 +1,7 @@
 import uuid
 import datetime
 from sqlalchemy import func
+from sqlalchemy.sql.functions import user
 from app.main import db
 from app.main.model.circle import Circle, circle_type_table
 from app.main.model.circle_type import CircleType
@@ -42,49 +43,64 @@ def save_new_circle(user_pid, data):
     except:
         return 500
 
-def get_all_circles_by_user(user_pid):
-    return [
-        dict(
-            public_id = circle[0],
-            name = circle[1],
-            bio = circle[2],
-            _type = [
-                dict(
-                    type_pid = _type[0],
-                    type_name = _type[1]
-                ) for _type in db.session.query(
-                    circle_type_table.c.type_pid, 
-                    CircleType.name
-                    ).filter(circle_type_table.c.circle_pid==circle[0]
-                    ).filter(circle_type_table.c.type_pid==CircleType.public_id
+def get_all_circles_by_user(requestor_pid, user_pid):
+    if requestor_pid == user_pid:
+        return [
+            dict(
+                public_id = circle[0],
+                name = circle[1],
+                bio = circle[2],
+                _type = [
+                    dict(
+                        type_pid = _type[0],
+                        type_name = _type[1]
+                    ) for _type in db.session.query(
+                        circle_type_table.c.type_pid, 
+                        CircleType.name
+                        ).filter(circle_type_table.c.circle_pid==circle[0]
+                        ).filter(circle_type_table.c.type_pid==CircleType.public_id
+                        ).all()
+                ],
+                photo = circle[3],
+                registered_on = circle[4],
+                admin = [
+                    dict(
+                        admin_id = admin[0],
+                        admin_name = admin[1],
+                        admin_username = admin[2],
+                        admin_photo = admin[3],
+                    ) for admin in db.session.query(
+                        User.public_id,
+                        User.name,
+                        User.username,
+                        User.photo
+                    ).filter(circle_member_table.c.member_pid==User.public_id
+                    ).filter(circle_member_table.c.is_admin==True
+                    ).filter(circle_member_table.c.circle_pid==circle[0]
                     ).all()
-            ],
-            photo = circle[3],
-            registered_on = circle[4],
-            admin_id = circle[5],
-            admin_name = circle[6],
-            admin_username = circle[7],
-            admin_photo = circle[8]
-        ) for circle in db.session.query(
-            Circle.public_id,
-            Circle.name,
-            Circle.bio,
-            Circle.photo,
-            Circle.registered_on,
-            User.public_id,
-            User.name,
-            User.username,
-            User.photo
-        ).filter(
-            circle_member_table.c.member_pid == user_pid
-        ).filter(
-            circle_member_table.c.is_accepted == True
-        ).filter(
-            User.public_id == circle_member_table.c.member_pid
-        ).filter(
-            Circle.public_id == circle_member_table.c.circle_pid
-        ).order_by(Circle.registered_on.desc()).all()
-    ]
+                ]
+            ) for circle in db.session.query(
+                Circle.public_id,
+                Circle.name,
+                Circle.bio,
+                Circle.photo,
+                Circle.registered_on
+            ).select_from(
+                circle_member_table
+            ).filter(
+                circle_member_table.c.member_pid == requestor_pid
+            ).filter(
+                circle_member_table.c.is_accepted == True
+            ).outerjoin(
+                Circle
+            ).order_by(Circle.registered_on.desc()).all()
+        ]
+    else:
+        response_object = {
+            'status': 'fail',
+            'message': 'Forbidden.'
+        }
+        return response_object, 403
 
 def patch_a_circle(public_id, user_pid, data):
     circle = Circle.query.filter_by(public_id=public_id).first()
@@ -169,19 +185,9 @@ def get_a_circle(user_pid, public_id):
         Circle.name,
         Circle.bio,
         Circle.photo,
-        Circle.registered_on,
-        User.public_id,
-        User.name,
-        User.username,
-        User.photo
+        Circle.registered_on
     ).filter(
         Circle.public_id == public_id
-    ).filter(
-        circle_member_table.c.circle_pid == public_id
-    ).filter(
-        circle_member_table.c.is_admin == True
-    ).filter(
-        User.public_id == circle_member_table.c.member_pid
     ).first()
 
     if circle:
@@ -202,10 +208,6 @@ def get_a_circle(user_pid, public_id):
             ],
             photo = circle[3],
             registered_on = circle[4],
-            admin_id = circle[5],
-            admin_name = circle[6],
-            admin_username = circle[7],
-            admin_photo = circle[8],
             visitor_auth = 3 if db.session.query(
                 circle_member_table
             ).filter(
@@ -233,9 +235,20 @@ def get_a_circle(user_pid, public_id):
             ).filter(
                 circle_member_table.c.is_accepted == False
             ).first() else 0,
-            member_count = db.session.query(
-                func.count(circle_member_table.c.public_id)
-            ).filter(
-                circle_member_table.c.circle_pid == public_id
-            ).scalar()
+            admin = [
+                dict(
+                    admin_id = admin[0],
+                    admin_name = admin[1],
+                    admin_username = admin[2],
+                    admin_photo = admin[3],
+                ) for admin in db.session.query(
+                    User.public_id,
+                    User.name,
+                    User.username,
+                    User.photo
+                ).filter(circle_member_table.c.member_pid==User.public_id
+                ).filter(circle_member_table.c.is_admin==True
+                ).filter(circle_member_table.c.circle_pid==circle[0]
+                ).all()
+            ]
         )

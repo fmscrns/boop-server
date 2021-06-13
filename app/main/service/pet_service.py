@@ -1,4 +1,7 @@
+from sqlalchemy.sql.expression import outerjoin
+from app.main.util.dto import PostDto
 from sqlalchemy.orm import session
+from sqlalchemy import or_
 from sqlalchemy.sql.functions import user
 from app.main.service import model_save_changes, table_save_changes
 import uuid
@@ -127,18 +130,18 @@ def get_all_pets_by_user(requestor_pid, user_pid, tag_suggestions):
             Breed.public_id,
             Breed.name,
             Pet.is_private
-        ).filter(
-            Pet.specie_group_id == Specie.public_id
-        ).filter(
-            Pet.breed_subgroup_id == Breed.public_id
-        ).filter(
-            pet_follower_table.c.pet_pid == Pet.public_id
+        ).select_from(
+            pet_follower_table
         ).filter(
             pet_follower_table.c.follower_pid == user_pid
         ).filter(
-            pet_follower_table.c.is_owner == True if tag_suggestions == None else (True or False)
-        ).filter(
-            pet_follower_table.c.is_accepted == True
+            or_(pet_follower_table.c.is_owner == True, pet_follower_table.c.is_accepted == True) if tag_suggestions == 1 else pet_follower_table.c.is_owner == True
+        ).outerjoin(
+            Pet
+        ).outerjoin(
+            Breed
+        ).outerjoin(
+            Specie
         ).order_by(Pet.registered_on.desc()).all()
     ]
 

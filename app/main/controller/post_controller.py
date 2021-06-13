@@ -17,7 +17,6 @@ class PostList(Resource):
     def get(self, user_pid):
         """List all registered posts"""
         return get_all_posts()
-        # print(get_all_posts())
 
     @token_required
     @api.response(201, 'Post successfully created.')

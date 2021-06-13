@@ -7,10 +7,6 @@ from app.main.model.business_operation import BusinessOperation
 from app.main.model.business_type import BusinessType
 from app.main.model.user import User
 from app.main.service import model_save_changes, table_save_changes
-# def get_all_businesses():
-#     return Business.query.order_by(Business.registered_on.desc()).all()
-
-
 
 def save_new_business(user_pid, data):
     try:
@@ -59,45 +55,52 @@ def save_new_business(user_pid, data):
     except:
         return 500
 
-def get_all_businesses_by_user(user_pid):
-    return [
-        dict(
-            public_id = business[0],
-            name = business[1],
-            bio = business[2],
-            _type = [
-                dict(
-                    type_pid = _type[0],
-                    type_name = _type[1]
-                ) for _type in db.session.query(
-                    business_type_table.c.type_pid, 
-                    BusinessType.name
-                    ).filter(business_type_table.c.business_pid==business[0]
-                    ).filter(business_type_table.c.type_pid==BusinessType.public_id
-                    ).all()
-            ],
-            photo = business[3],
-            registered_on = business[4],
-            executive_id = business[5],
-            executive_name = business[6],
-            executive_username = business[7],
-            executive_photo = business[8]
-        ) for business in db.session.query(
-            Business.public_id,
-            Business.name,
-            Business.bio,
-            Business.photo,
-            Business.registered_on,
-            User.public_id,
-            User.name,
-            User.username,
-            User.photo
-        ).filter(
-            Business.user_executive_id == user_pid
-        ).filter(
-            Business.user_executive_id == User.public_id
-        ).order_by(Business.registered_on.desc()).all()
-    ]
+def get_all_businesses_by_user(requestor_pid, user_pid):
+    if requestor_pid == user_pid:
+        return [
+            dict(
+                public_id = business[0],
+                name = business[1],
+                bio = business[2],
+                _type = [
+                    dict(
+                        type_pid = _type[0],
+                        type_name = _type[1]
+                    ) for _type in db.session.query(
+                        business_type_table.c.type_pid, 
+                        BusinessType.name
+                        ).filter(business_type_table.c.business_pid==business[0]
+                        ).filter(business_type_table.c.type_pid==BusinessType.public_id
+                        ).all()
+                ],
+                photo = business[3],
+                registered_on = business[4],
+                executive_id = business[5],
+                executive_name = business[6],
+                executive_username = business[7],
+                executive_photo = business[8]
+            ) for business in db.session.query(
+                Business.public_id,
+                Business.name,
+                Business.bio,
+                Business.photo,
+                Business.registered_on,
+                User.public_id,
+                User.name,
+                User.username,
+                User.photo
+            ).filter(
+                Business.user_executive_id == user_pid
+            ).filter(
+                Business.user_executive_id == User.public_id
+            ).order_by(Business.registered_on.desc()).all()
+        ]
+    else:
+        response_object = {
+            'status': 'fail',
+            'message': 'Forbidden.'
+        }
+        return response_object, 403
 
 def patch_a_business(public_id, user_pid, data):
     business = Business.query.filter_by(public_id=public_id).first()

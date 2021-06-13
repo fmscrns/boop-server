@@ -16,7 +16,6 @@ def create_circle_member(user_pid, public_id):
         ).filter(
             circle_member_table.c.member_pid == user_pid
         ).first()
-
         if not member:
             statement = circle_member_table.insert().values(
                 public_id=str(uuid.uuid4()),
@@ -42,7 +41,7 @@ def create_circle_member(user_pid, public_id):
         }
         return response_object, 404
 
-def delete_circle_member(user_pid, public_id, member_id, data):
+def delete_circle_member(user_pid, public_id, member_id):
     circle = Circle.query.filter_by(public_id=public_id).first()
     if circle:
         requestor = db.session.query(
@@ -59,21 +58,9 @@ def delete_circle_member(user_pid, public_id, member_id, data):
             circle_member_table.c.circle_pid == public_id
         ).filter(
             circle_member_table.c.member_pid == member_id
+        ).filter(
+            circle_member_table.c.is_admin == False
         ).first()
-
-        member_list_length = db.session.query(
-            func.count(circle_member_table.c.public_id)
-        ).filter(
-            circle_member_table.c.circle_pid == public_id
-        ).scalar()
-
-        admin_list_length = db.session.query(
-            func.count(circle_member_table.c.public_id)
-        ).filter(
-            circle_member_table.c.circle_pid == public_id
-        ).filter(
-            circle_member_table.c.is_admin == True
-        ).scalar()
 
         if requestor and target_member:
             admin_requestor = db.session.query(
@@ -87,20 +74,17 @@ def delete_circle_member(user_pid, public_id, member_id, data):
             ).first()
 
             if admin_requestor:
-                if admin_list_length != 1:
-                    statement = circle_member_table.delete().where(
-                        circle_member_table.c.member_pid==member_id
-                    ).where(
-                        circle_member_table.c.circle_pid==public_id
-                    )
-                    table_save_changes(statement)
-                    response_object = {
-                        'status': 'success',
-                        'message': 'Circle member successfully deleted.'
-                    }
-                    return response_object, 201
-                else:
-                    return circle_service.delete_a_circle(public_id, user_pid, data)
+                statement = circle_member_table.delete().where(
+                    circle_member_table.c.member_pid==member_id
+                ).where(
+                    circle_member_table.c.circle_pid==public_id
+                )
+                table_save_changes(statement)
+                response_object = {
+                    'status': 'success',
+                    'message': 'Circle member successfully deleted.'
+                }
+                return response_object, 201
             elif user_pid == member_id:
                 statement = circle_member_table.delete().where(
                     circle_member_table.c.member_pid==member_id
@@ -109,9 +93,9 @@ def delete_circle_member(user_pid, public_id, member_id, data):
                 )
                 table_save_changes(statement)
                 response_object = {
-                        'status': 'success',
-                        'message': 'Circle member successfully deleted.'
-                    }
+                    'status': 'success',
+                    'message': 'Circle member successfully deleted.'
+                }
                 return response_object, 201
             else:
                 response_object = {
@@ -191,11 +175,140 @@ def get_all_circle_members(public_id, type):
             circle_member_table.c.member_pid == User.public_id
         ).filter(
             circle_member_table.c.is_accepted == (False if type == "0" else True)
+        ).filter(
+            circle_member_table.c.is_admin == False
         ).all()
 
     else:
         response_object = {
             'status': 'fail',
             'message': 'No circle found.'
+        }
+        return response_object, 404
+
+def create_circle_admin(user_pid, circle_pid, data):
+    circle = Circle.query.filter_by(public_id=circle_pid).first()
+    if circle:
+        member = db.session.query(
+            circle_member_table
+        ).filter(
+            circle_member_table.c.member_pid == data.get("public_id")
+        ).filter(
+            circle_member_table.c.circle_pid == circle_pid
+        ).filter(
+            circle_member_table.c.is_accepted == True
+        ).first()
+
+        requesting_admin = db.session.query(
+            circle_member_table
+        ).filter(
+            circle_member_table.c.member_pid == user_pid
+        ).filter(
+            circle_member_table.c.circle_pid == circle_pid
+        ).filter(
+            circle_member_table.c.is_admin == True
+        ).first()
+
+        if member and requesting_admin:
+            member_is_admin = db.session.query(
+                circle_member_table
+            ).filter(
+                circle_member_table.c.member_pid == data.get("public_id")
+            ).filter(
+                circle_member_table.c.circle_pid == circle_pid
+            ).filter(
+                circle_member_table.c.is_admin == True
+            ).first()
+
+            if not member_is_admin:
+                statement = circle_member_table.update().where(
+                    circle_member_table.c.member_pid == data.get("public_id")
+                ).where(
+                    circle_member_table.c.circle_pid == circle_pid
+                ).values(
+                    is_admin=True
+                )
+                table_save_changes(statement)
+                response_object = {
+                    'status': 'success',
+                    'message': 'Circle successfully have new admin.'
+                }
+                return response_object, 201
+            else:
+                response_object = {
+                    'status': 'fail',
+                    'message': 'User is already an admin of the circle.',
+                }
+                return response_object, 409
+        else:
+            response_object = {
+                'status': 'fail',
+                'message': 'Forbidden.',
+            }
+            return response_object, 403
+    else:
+        response_object = {
+            'status': 'fail',
+            'message': 'No circle found.'
+        }
+        return response_object, 404
+
+def delete_circle_admin(user_pid, circle_pid, admin_id, data):
+    circle = Circle.query.filter_by(public_id=circle_pid).first()
+    if circle:
+        requestor = db.session.query(
+            circle_member_table
+        ).filter(
+            circle_member_table.c.member_pid == user_pid
+        ).filter(
+            circle_member_table.c.circle_pid == circle_pid
+        ).filter(
+            circle_member_table.c.is_admin == True
+        ).first()
+
+        target_admin = db.session.query(
+            circle_member_table
+        ).filter(
+            circle_member_table.c.member_pid == admin_id
+        ).filter(
+            circle_member_table.c.circle_pid == circle_pid
+        ).filter(
+            circle_member_table.c.is_admin == True
+        ).first()
+
+        admin_list_length = db.session.query(
+            func.count(circle_member_table.c.public_id)
+        ).filter(
+            circle_member_table.c.circle_pid == circle_pid
+        ).filter(
+            circle_member_table.c.is_admin == True
+        ).scalar()
+        if requestor and target_admin:
+            if admin_list_length != 1:
+                statement = circle_member_table.update().where(
+                    circle_member_table.c.member_pid==admin_id
+                ).where(
+                    circle_member_table.c.circle_pid==circle_pid
+                ).values(
+                    is_admin = False
+                )
+                table_save_changes(statement)
+                response_object = {
+                    'status': 'success',
+                    'message': 'Circle admin successfully removed.'
+                }
+                return response_object, 201
+            else:
+                return circle_service.delete_a_circle(circle_pid, user_pid, data)
+        else:
+            response_object = {
+                'status': 'fail',
+                'message': 'Forbidden.',
+            }
+            return response_object, 403
+    else:
+        response_object = {
+            'status': 'fail',
+            'message': 'No pet found.'
         }
         return response_object, 404

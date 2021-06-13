@@ -142,62 +142,6 @@ def get_all_posts_by_user(requestor_pid, user_pid):
         ).order_by(Post.registered_on.desc()).all()
     ]
 
-def get_all_posts_by_user2(requestor_pid, user_pid):
-    return [
-        dict(
-            public_id = post[0],
-            content = post[1],
-            photo = post[2],
-            registered_on = post[3],
-            creator_id = post[4],
-            creator_name = post[5],
-            creator_username = post[6],
-            creator_photo = post[7],
-            pinboard_id = post[8],
-            pinboard_name = post[9],
-            confiner_id = post[10],
-            confiner_name = post[11],
-            subject = [
-                dict(
-                    subject_id = subject[0],
-                    subject_name = subject[1],
-                    subject_photo = subject[2]
-                ) for subject in db.session.query(
-                    Pet.public_id, 
-                    Pet.name,
-                    Pet.photo
-                    ).filter(post_subject_table.c.post_pid==post[0]
-                    ).filter(post_subject_table.c.subject_pid==Pet.public_id
-                    ).all()
-            ],
-        ) for post in db.session.query(
-            Post.public_id,
-            Post.content,
-            Post.photo,
-            Post.registered_on,
-            User.public_id,
-            User.name,
-            User.username,
-            User.photo,
-            Business.public_id,
-            Business.name,
-            Circle.public_id,
-            Circle.name
-        ).filter(
-            Post.user_creator_id == user_pid
-        ).filter(
-            Post.user_creator_id == User.public_id
-        ).filter(
-            Post.business_pinboard_id == Business.public_id
-        ).outerjoin(
-            Circle
-        ).outerjoin(
-            circle_member_table
-        ).filter(
-            or_(Post.circle_confiner_id == None, circle_member_table.c.member_pid == user_pid)
-        ).order_by(Post.registered_on.desc()).all()
-    ]
-
 def get_all_posts_by_business(business_pid):
     return [
         dict(
