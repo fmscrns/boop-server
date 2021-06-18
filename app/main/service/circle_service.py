@@ -36,8 +36,7 @@ def save_new_circle(user_pid, data):
         table_save_changes(statement)
         response_object = {
             'status': 'success',
-            'message': 'Circle successfully registered.',
-            'payload': User.query.filter_by(public_id=user_pid).first().username
+            'message': 'Circle successfully registered.'
         }
         return response_object, 201
     except:
@@ -143,6 +142,7 @@ def patch_a_circle(public_id, user_pid, data):
         return response_object, 404
 
 def delete_a_circle(public_id, user_pid, data):
+    print(public_id, user_pid, data)
     circle = Circle.query.filter_by(public_id=public_id).first()
     admin = db.session.query(
         circle_member_table

@@ -83,7 +83,7 @@ class CircleMemberList(Resource):
     @api.marshal_list_with(_user, envelope='data')
     def get(self, user_pid, public_id):
         """List all registered circle members"""
-        return get_all_circle_members(public_id, request.args.get("type"))
+        return get_all_circle_members(user_pid, public_id, request.args.get("type"), request.args.get("search"))
 
     @token_required
     @api.doc('create circle member')

@@ -6,7 +6,7 @@ from sqlalchemy.sql.expression import select
 from sqlalchemy.sql.functions import user
 from app.main import db
 from app.main.model.post import Post
-from app.main.model.user import User, circle_member_table
+from app.main.model.user import User, circle_member_table, pet_follower_table, business_follower_table
 from app.main.model.pet import Pet
 from app.main.model.business import Business
 from app.main.model.circle import Circle
@@ -27,14 +27,7 @@ def save_new_post(user_pid, data):
     if data.get("pinboard_id"):
         business = Business.query.filter_by(public_id=data["pinboard_id"]).first()
         if business:
-            if business.user_executive_id == user_pid:
-                new_post.business_pinboard_id = data.get("pinboard_id")
-            else:
-                response_object = {
-                    'status': 'fail',
-                    'message': 'Unauthorized.'
-                }
-                return response_object, 401
+            new_post.business_pinboard_id = data.get("pinboard_id")
         else:
             response_object = {
                 'status': 'fail',
@@ -183,92 +176,130 @@ def get_all_posts_by_business(business_pid):
     ]
 
 def get_all_posts_by_pet(user_pid, pet_pid):
-    return [
-        dict(
-            public_id = post[0],
-            content = post[1],
-            photo = post[2],
-            registered_on = post[3],
-            creator_id = post[4],
-            creator_name = post[5],
-            creator_username = post[6],
-            creator_photo = post[7],
-            subject = [
-                dict(
-                    subject_id = subject[0],
-                    subject_name = subject[1],
-                    subject_photo = subject[2]
-                ) for subject in db.session.query(
-                    Pet.public_id, 
-                    Pet.name,
-                    Pet.photo
-                    ).filter(post_subject_table.c.post_pid==post[0]
-                    ).filter(post_subject_table.c.subject_pid==Pet.public_id
-                    ).all()
-            ]
-        ) for post in db.session.query(
-            Post.public_id,
-            Post.content,
-            Post.photo,
-            Post.registered_on,
-            User.public_id,
-            User.name,
-            User.username,
-            User.photo
-        ).filter(
-            Post.user_creator_id == User.public_id
-        ).filter(
-            post_subject_table.c.post_pid == Post.public_id
-        ).filter(
-            post_subject_table.c.subject_pid == pet_pid
-        ).outerjoin(
-            Circle
-        ).outerjoin(
-            circle_member_table
-        ).filter(
-            or_(Post.circle_confiner_id == None, circle_member_table.c.member_pid == user_pid)
-        ).order_by(Post.registered_on.desc()).all()
-    ]
+    pet = Pet.query.filter_by(public_id=pet_pid).first()
+    
+    follower = db.session.query(
+        pet_follower_table
+    ).filter(
+        pet_follower_table.c.follower_pid == user_pid
+    ).filter(
+        pet_follower_table.c.pet_pid == pet_pid
+    ).filter(
+        pet_follower_table.c.is_accepted == True
+    ).first()
 
-def get_all_posts_by_circle(confiner_pid):
-    return [
-        dict(
-            public_id = post[0],
-            content = post[1],
-            photo = post[2],
-            registered_on = post[3],
-            creator_id = post[4],
-            creator_name = post[5],
-            creator_username = post[6],
-            creator_photo = post[7],
-            subject = [
+    if pet:
+        if (follower and pet.is_private == 1) or (pet.is_private == 0):
+            return [
                 dict(
-                    subject_id = subject[0],
-                    subject_name = subject[1],
-                    subject_photo = subject[2]
-                ) for subject in db.session.query(
-                    Pet.public_id, 
-                    Pet.name,
-                    Pet.photo
-                    ).filter(post_subject_table.c.post_pid==post[0]
-                    ).filter(post_subject_table.c.subject_pid==Pet.public_id
-                    ).all()
+                    public_id = post[0],
+                    content = post[1],
+                    photo = post[2],
+                    registered_on = post[3],
+                    creator_id = post[4],
+                    creator_name = post[5],
+                    creator_username = post[6],
+                    creator_photo = post[7],
+                    subject = [
+                        dict(
+                            subject_id = subject[0],
+                            subject_name = subject[1],
+                            subject_photo = subject[2]
+                        ) for subject in db.session.query(
+                            Pet.public_id, 
+                            Pet.name,
+                            Pet.photo
+                            ).filter(post_subject_table.c.post_pid==post[0]
+                            ).filter(post_subject_table.c.subject_pid==Pet.public_id
+                            ).all()
+                    ]
+                ) for post in db.session.query(
+                    Post.public_id,
+                    Post.content,
+                    Post.photo,
+                    Post.registered_on,
+                    User.public_id,
+                    User.name,
+                    User.username,
+                    User.photo
+                ).filter(
+                    Post.user_creator_id == User.public_id
+                ).filter(
+                    post_subject_table.c.post_pid == Post.public_id
+                ).filter(
+                    post_subject_table.c.subject_pid == pet_pid
+                ).outerjoin(
+                    Circle
+                ).outerjoin(
+                    circle_member_table
+                ).filter(
+                    or_(Post.circle_confiner_id == None, circle_member_table.c.member_pid == user_pid)
+                ).order_by(Post.registered_on.desc()).all()
             ]
-        ) for post in db.session.query(
-            Post.public_id,
-            Post.content,
-            Post.photo,
-            Post.registered_on,
-            User.public_id,
-            User.name,
-            User.username,
-            User.photo
-        ).filter(
-            Post.circle_confiner_id == confiner_pid
-        ).filter(
-            Post.user_creator_id == User.public_id
-        ).order_by(Post.registered_on.desc()).all()
-    ]
+        else:
+            response_object = {
+                'status': 'fail',
+                'message': 'Forbidden.'
+            }
+            return response_object, 403
+
+def get_all_posts_by_circle(requestor_pid, confiner_pid):
+    member = db.session.query(
+        circle_member_table
+    ).filter(
+        circle_member_table.c.member_pid == requestor_pid
+    ).filter(
+        circle_member_table.c.circle_pid == confiner_pid
+    ).filter(
+        circle_member_table.c.is_accepted == True
+    ).first()
+
+    if member:
+        return [
+            dict(
+                public_id = post[0],
+                content = post[1],
+                photo = post[2],
+                registered_on = post[3],
+                creator_id = post[4],
+                creator_name = post[5],
+                creator_username = post[6],
+                creator_photo = post[7],
+                subject = [
+                    dict(
+                        subject_id = subject[0],
+                        subject_name = subject[1],
+                        subject_photo = subject[2]
+                    ) for subject in db.session.query(
+                        Pet.public_id, 
+                        Pet.name,
+                        Pet.photo
+                        ).filter(post_subject_table.c.post_pid==post[0]
+                        ).filter(post_subject_table.c.subject_pid==Pet.public_id
+                        ).all()
+                ]
+            ) for post in db.session.query(
+                Post.public_id,
+                Post.content,
+                Post.photo,
+                Post.registered_on,
+                User.public_id,
+                User.name,
+                User.username,
+                User.photo
+            ).filter(
+                Post.circle_confiner_id == confiner_pid
+            ).filter(
+                Post.user_creator_id == User.public_id
+            ).order_by(Post.registered_on.desc()).all()
+        ]
+
+    else:
+        response_object = {
+            'status': 'fail',
+            'message': 'Forbidden.'
+        }
+        return response_object, 403
 
 def get_all_posts():
     return [

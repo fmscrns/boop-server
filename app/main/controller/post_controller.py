@@ -65,7 +65,7 @@ class PostListByCircle(Resource):
     @api.marshal_list_with(_post, envelope='data')
     def get(self, user_pid, confiner_id):
         """List all registered posts"""
-        return get_all_posts_by_circle(confiner_id)
+        return get_all_posts_by_circle(user_pid, confiner_id)
 
 @api.route('/<public_id>')
 @api.param('public_id', 'The Post identifier')

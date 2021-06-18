@@ -4,9 +4,9 @@ from flask_restx import Namespace, fields
 class UserDto:
     api = Namespace('user', description='user related operations')
     user = api.model('user', {
-        'name': fields.String(required=True, description='user name'),
+        'name': fields.String(required=True, description='user name', min_length=2),
         'email': fields.String(required=True, description='user email address', pattern='^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'),
-        'username': fields.String(required=True, description='user username'),
+        'username': fields.String(required=True, description='user username', min_length=2),
         'password': fields.String(required=True, description='user password', pattern='^(?!\s*$).+'),
         'public_id': fields.String(description='user Identifier'),
         "photo": fields.String(description="user profile photo"),
@@ -15,14 +15,14 @@ class UserDto:
 class SpecieDto:
     api = Namespace('specie', description='specie related operations')
     specie = api.model('specie', {
-        'name': fields.String(required=True, description='specie name'),
+        'name': fields.String(required=True, description='specie name', min_length=2),
         'public_id': fields.String(description='specie Identifier')
     })
 
 class BreedDto:
     api = Namespace('breed', description='breed related operations')
     breed = api.model('breed', {
-        'name': fields.String(required=True, description='breed name'),
+        'name': fields.String(required=True, description='breed name', min_length=2),
         'public_id': fields.String(description='breed Identifier'),
         'parent_name': fields.String(description='specie parent name'),
         'parent_id': fields.String(required=True, description='specie parent Identifier'),
@@ -31,7 +31,7 @@ class BreedDto:
 class AuthDto:
     api = Namespace('auth', description='authentication related operations')
     user_auth = api.model('auth_details', {
-        'username_or_email': fields.String(required=True, description='The username or email address'),
+        'username_or_email': fields.String(required=True, description='The username or email address', min_length=2),
         'password': fields.String(required=True, description='The user password '),
     })
 
@@ -40,7 +40,7 @@ class PetDto:
     
     pet = api.model("pet", {
         "public_id": fields.String(description="pet identifier"),
-        "name": fields.String(required=True, description="pet name"),
+        "name": fields.String(required=True, description="pet name", min_length=2),
         "bio": fields.String(description="pet biography"),
         "birthday": fields.DateTime(dt_format="rfc822", description="pet birthday"),
         "sex": fields.Integer(required=True, description="pet sex", min=-1, max=1),
@@ -68,7 +68,7 @@ class BusinessDto:
     
     business = api.model("business", {
         "public_id": fields.String(description="business identifier"),
-        "name": fields.String(required=True, description="business name"),
+        "name": fields.String(required=True, description="business name", min_length=2),
         "bio": fields.String(description="business biography"),
         "_type": fields.List(fields.Nested(
             api.model("_type", {
@@ -78,10 +78,15 @@ class BusinessDto:
         ), required=True, description="business type"),
         "photo": fields.String(description="business profile photo filename"),
         "registered_on": fields.DateTime(dt_format="rfc822", required=False, description="creation date"),
-        "executive_id": fields.String(description="user identifier"),
-        "executive_name": fields.String(description="user name"),
-        "executive_username": fields.String(description="user username"),
-        "executive_photo": fields.String(description="user profile photo filename")
+        "executive": fields.List(fields.Nested(
+            api.model("executive", {
+                "public_id": fields.String(description="user identifier", attribute="executive_id"),
+                "name": fields.String(description="user name", attribute="executive_name"),
+                "username": fields.String(description="user username", attribute="executive_username"),
+                "photo": fields.String(description="user profile photo filename", attribute="executive_photo"),
+            })
+        ), description="pet owner"),
+        "visitor_auth": fields.Integer(description="visiting user authorization")
     })
 
 class PostDto:
@@ -89,7 +94,7 @@ class PostDto:
     
     post = api.model("post", {
         "public_id": fields.String(description="post identifier"),
-        "content": fields.String(required=True, description="post content"),
+        "content": fields.String(required=True, description="post content", min_length=1),
         "photo": fields.String(description="post photo"),
         "registered_on": fields.DateTime(dt_format="rfc822", required=False, description="creation date"),
         "creator_id": fields.String(description="user identifier"),
@@ -106,13 +111,13 @@ class PostDto:
                 "name": fields.String(description="pet name", attribute="subject_name"),
                 "photo": fields.String(description="pet profile photo filename", attribute="subject_photo")
             })
-        ), description="post subject"),
+        ), description="post subject", required=True),
     })
 
 class BusinessTypeDto:
     api = Namespace('business_type', description='business type related operations')
     business_type = api.model('business_type', {
-        'name': fields.String(required=True, description='business type name'),
+        'name': fields.String(required=True, description='business type name', min_length=2),
         'public_id': fields.String(description='business type Identifier')
     })
 
@@ -122,7 +127,7 @@ class CircleDto:
     
     circle = api.model("circle", {
         "public_id": fields.String(description="circle identifier"),
-        "name": fields.String(required=True, description="circle name"),
+        "name": fields.String(required=True, description="circle name", min_length=2),
         "bio": fields.String(description="circle biography"),
         "_type": fields.List(fields.Nested(
             api.model("_type", {
@@ -147,6 +152,6 @@ class CircleDto:
 class CircleTypeDto:
     api = Namespace('circle_type', description='circle type related operations')
     circle_type = api.model('circle_type', {
-        'name': fields.String(required=True, description='circle type name'),
+        'name': fields.String(required=True, description='circle type name', min_length=2),
         'public_id': fields.String(description='circle type Identifier')
     })

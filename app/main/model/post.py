@@ -7,7 +7,7 @@ class Post(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     public_id = db.Column(db.String(100), unique=True, nullable=False)
-    content = db.Column(db.String(400))
+    content = db.Column(db.String(400), nullable=False)
     photo = db.Column(db.String(50))
     registered_on = db.Column(db.DateTime, nullable=False)
 

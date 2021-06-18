@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: cf66211bf32b
+Revision ID: 6958dc8da4b7
 Revises: 
-Create Date: 2021-06-04 20:05:06.475890
+Create Date: 2021-06-14 20:29:53.485247
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'cf66211bf32b'
+revision = '6958dc8da4b7'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -24,6 +24,16 @@ def upgrade():
     sa.Column('blacklisted_on', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('token')
+    )
+    op.create_table('business',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('public_id', sa.String(length=100), nullable=False),
+    sa.Column('name', sa.String(length=50), nullable=False),
+    sa.Column('registered_on', sa.DateTime(), nullable=False),
+    sa.Column('bio', sa.String(length=100), nullable=True),
+    sa.Column('photo', sa.String(length=50), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('public_id')
     )
     op.create_table('business_type',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -86,15 +96,38 @@ def upgrade():
     sa.UniqueConstraint('name'),
     sa.UniqueConstraint('public_id')
     )
-    op.create_table('business',
+    op.create_table('business_executive_table',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('public_id', sa.String(length=100), nullable=True),
+    sa.Column('business_pid', sa.String(length=100), nullable=True),
+    sa.Column('follower_pid', sa.String(length=100), nullable=True),
+    sa.Column('is_executive', sa.Boolean(), nullable=True),
+    sa.Column('registered_on', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['business_pid'], ['business.public_id'], ),
+    sa.ForeignKeyConstraint(['follower_pid'], ['user.public_id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('public_id')
+    )
+    op.create_table('business_operation',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('public_id', sa.String(length=100), nullable=False),
-    sa.Column('name', sa.String(length=50), nullable=False),
+    sa.Column('day', sa.String(length=20), nullable=False),
+    sa.Column('is_open', sa.Boolean(), nullable=False),
+    sa.Column('start_at', sa.Time(), nullable=True),
+    sa.Column('end_at', sa.Time(), nullable=True),
+    sa.Column('business_prop_id', sa.String(), nullable=False),
+    sa.ForeignKeyConstraint(['business_prop_id'], ['business.public_id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('public_id')
+    )
+    op.create_table('business_type_table',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('public_id', sa.String(length=100), nullable=True),
+    sa.Column('business_pid', sa.String(length=100), nullable=True),
+    sa.Column('type_pid', sa.String(length=100), nullable=True),
     sa.Column('registered_on', sa.DateTime(), nullable=False),
-    sa.Column('bio', sa.String(length=100), nullable=True),
-    sa.Column('photo', sa.String(length=50), nullable=True),
-    sa.Column('user_executive_id', sa.String(), nullable=False),
-    sa.ForeignKeyConstraint(['user_executive_id'], ['user.public_id'], ),
+    sa.ForeignKeyConstraint(['business_pid'], ['business.public_id'], ),
+    sa.ForeignKeyConstraint(['type_pid'], ['business_type.public_id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('public_id')
     )
@@ -122,26 +155,18 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('public_id')
     )
-    op.create_table('business_operation',
+    op.create_table('post',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('public_id', sa.String(length=100), nullable=False),
-    sa.Column('day', sa.String(length=20), nullable=False),
-    sa.Column('is_open', sa.Boolean(), nullable=False),
-    sa.Column('start_at', sa.Time(), nullable=True),
-    sa.Column('end_at', sa.Time(), nullable=True),
-    sa.Column('business_prop_id', sa.String(), nullable=False),
-    sa.ForeignKeyConstraint(['business_prop_id'], ['business.public_id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('public_id')
-    )
-    op.create_table('business_type_table',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('public_id', sa.String(length=100), nullable=True),
-    sa.Column('business_pid', sa.String(length=100), nullable=True),
-    sa.Column('type_pid', sa.String(length=100), nullable=True),
+    sa.Column('content', sa.String(length=400), nullable=True),
+    sa.Column('photo', sa.String(length=50), nullable=True),
     sa.Column('registered_on', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['business_pid'], ['business.public_id'], ),
-    sa.ForeignKeyConstraint(['type_pid'], ['business_type.public_id'], ),
+    sa.Column('user_creator_id', sa.String(), nullable=False),
+    sa.Column('business_pinboard_id', sa.String(), nullable=True),
+    sa.Column('circle_confiner_id', sa.String(), nullable=True),
+    sa.ForeignKeyConstraint(['business_pinboard_id'], ['business.public_id'], ),
+    sa.ForeignKeyConstraint(['circle_confiner_id'], ['circle.public_id'], ),
+    sa.ForeignKeyConstraint(['user_creator_id'], ['user.public_id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('public_id')
     )
@@ -160,21 +185,6 @@ def upgrade():
     sa.Column('breed_subgroup_id', sa.String(), nullable=False),
     sa.ForeignKeyConstraint(['breed_subgroup_id'], ['breed.public_id'], ),
     sa.ForeignKeyConstraint(['specie_group_id'], ['specie.public_id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('public_id')
-    )
-    op.create_table('post',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('public_id', sa.String(length=100), nullable=False),
-    sa.Column('content', sa.String(length=400), nullable=True),
-    sa.Column('photo', sa.String(length=50), nullable=True),
-    sa.Column('registered_on', sa.DateTime(), nullable=False),
-    sa.Column('user_creator_id', sa.String(), nullable=False),
-    sa.Column('business_pinboard_id', sa.String(), nullable=True),
-    sa.Column('circle_confiner_id', sa.String(), nullable=True),
-    sa.ForeignKeyConstraint(['business_pinboard_id'], ['business.public_id'], ),
-    sa.ForeignKeyConstraint(['circle_confiner_id'], ['circle.public_id'], ),
-    sa.ForeignKeyConstraint(['user_creator_id'], ['user.public_id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('public_id')
     )
@@ -209,18 +219,19 @@ def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('post_subject_table')
     op.drop_table('pet_follower_table')
-    op.drop_table('post')
     op.drop_table('pet')
-    op.drop_table('business_type_table')
-    op.drop_table('business_operation')
+    op.drop_table('post')
     op.drop_table('circle_type_table')
     op.drop_table('circle_member_table')
-    op.drop_table('business')
+    op.drop_table('business_type_table')
+    op.drop_table('business_operation')
+    op.drop_table('business_executive_table')
     op.drop_table('breed')
     op.drop_table('user')
     op.drop_table('specie')
     op.drop_table('circle_type')
     op.drop_table('circle')
     op.drop_table('business_type')
+    op.drop_table('business')
     op.drop_table('blacklist_token')
     # ### end Alembic commands ###

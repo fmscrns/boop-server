@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from app.main import db
 from app.main.model.circle import Circle
@@ -164,21 +164,39 @@ def accept_circle_member(user_pid, public_id, member_id):
         }
         return response_object, 404
 
-def get_all_circle_members(public_id, type):
+def get_all_circle_members(requestor_pid, public_id, type, search_value):
     circle = Circle.query.filter_by(public_id=public_id).first()
+    requesting_admin = db.session.query(
+        circle_member_table
+    ).filter(
+        circle_member_table.c.member_pid == requestor_pid
+    ).filter(
+        circle_member_table.c.circle_pid == public_id
+    ).filter(
+        circle_member_table.c.is_admin == True
+    ).first()
     if circle:
-        return db.session.query(
-            User
-        ).filter(
-            circle_member_table.c.circle_pid == public_id
-        ).filter(
-            circle_member_table.c.member_pid == User.public_id
-        ).filter(
-            circle_member_table.c.is_accepted == (False if type == "0" else True)
-        ).filter(
-            circle_member_table.c.is_admin == False
-        ).all()
-
+        if (requesting_admin is not None and type == "0") or (type == "1"):
+            return db.session.query(
+                User
+            ).filter(
+                circle_member_table.c.circle_pid == public_id
+            ).filter(
+                circle_member_table.c.member_pid == User.public_id
+            ).filter(
+                circle_member_table.c.is_accepted == (False if type == "0" else True)
+            ).filter(
+                or_(User.name.ilike("%{}%".format(search_value if search_value else "")),
+                User.username.ilike("%{}%".format(search_value if search_value else "")))
+            ).filter(
+                circle_member_table.c.is_admin == False
+            ).all()
+        else:
+            response_object = {
+                'status': 'fail',
+                'message': 'Forbidden.'
+            }
+            return response_object, 403
     else:
         response_object = {
             'status': 'fail',

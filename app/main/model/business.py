@@ -1,5 +1,6 @@
 from datetime import datetime
 from .. import db
+from .user import business_follower_table
 
 business_type_table = db.Table('business_type_table',
     db.Column('id', db.Integer, primary_key=True, autoincrement=True),
@@ -19,10 +20,10 @@ class Business(db.Model):
     bio = db.Column(db.String(100))
     photo = db.Column(db.String(50))
 
-    user_executive_id = db.Column(db.String, db.ForeignKey("user.public_id"), nullable=False) 
-
     prop_business_rel = db.relationship('BusinessType', secondary=business_type_table, lazy="joined")
     prop_operation_rel = db.relationship('BusinessOperation', cascade="all,delete", lazy="joined")
+    user_follower_rel = db.relationship('User', secondary=business_follower_table, cascade="save-update", lazy="joined")
+    post_confiner_rel = db.relationship('Post', cascade="save-update", lazy="joined")
     
     def __repr__(self):
         return "<Business '{}'>".format(self.name)
