@@ -123,7 +123,17 @@ def patch_a_business(public_id, user_pid, data):
     business = Business.query.filter_by(public_id=public_id).first()
 
     if business:
-        if business.user_executive_id == user_pid:
+        executive = db.session.query(
+            business_follower_table
+        ).filter(
+            business_follower_table.c.business_pid == public_id
+        ).filter(
+            business_follower_table.c.follower_pid == user_pid
+        ).filter(
+            business_follower_table.c.is_executive == True
+        ).first()
+
+        if executive:
             statement = business_type_table.delete().where(business_type_table.c.business_pid==business.public_id)
             table_save_changes(statement)
             for _type in data.get("_type"):

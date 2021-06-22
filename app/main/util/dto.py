@@ -1,5 +1,8 @@
 from flask_restx import Namespace, fields
 
+class NullableString(fields.String):
+    __schema_type__ = ['string', 'null']
+    __schema_example__ = 'nullable string'
 
 class UserDto:
     api = Namespace('user', description='user related operations')
@@ -95,7 +98,11 @@ class PostDto:
     post = api.model("post", {
         "public_id": fields.String(description="post identifier"),
         "content": fields.String(required=True, description="post content", min_length=1),
-        "photo": fields.String(description="post photo"),
+        "photo": fields.List(fields.Nested(
+            api.model("photo", {
+                "filename": NullableString(description="post photo filename", attribute="photo_filename"),
+            })
+        ), description="post photo"),
         "registered_on": fields.DateTime(dt_format="rfc822", required=False, description="creation date"),
         "creator_id": fields.String(description="user identifier"),
         "creator_name": fields.String(description="user name"),
@@ -103,8 +110,10 @@ class PostDto:
         "creator_photo": fields.String(description="user profile photo filename"),
         "pinboard_id": fields.String(description="business identifier"),
         "pinboard_name": fields.String(description="business name"),
+        "pinboard_photo": fields.String(description="business photo"),
         "confiner_id": fields.String(description="circle identifier"),
         "confiner_name": fields.String(description="circle name"),
+        "confiner_photo": fields.String(description="circle photo"),
         "subject": fields.List(fields.Nested(
             api.model("subject", {
                 "public_id": fields.String(description="pet identifier", attribute="subject_id"),
@@ -112,6 +121,31 @@ class PostDto:
                 "photo": fields.String(description="pet profile photo filename", attribute="subject_photo")
             })
         ), description="post subject", required=True),
+        "like_count": fields.Integer(description="post like count"),
+        "comment_count": fields.Integer(description="post comment count"),
+        "is_liked": fields.Integer(description="visiting user like", min=0, max=1)
+        
+    })
+
+class CommentDto:
+    api = Namespace("comment", description="comment related operations")
+    
+    comment = api.model("comment", {
+        "public_id": fields.String(description="comment identifier"),
+        "content": fields.String(required=True, description="comment content", min_length=1),
+        "photo": fields.List(fields.Nested(
+            api.model("photo", {
+                "filename": NullableString(description="comment photo filename", attribute="photo_filename"),
+            })
+        ), description="comment photo"),
+        "registered_on": fields.DateTime(dt_format="rfc822", required=False, description="creation date"),
+        "creator_id": fields.String(description="user identifier"),
+        "creator_name": fields.String(description="user name"),
+        "creator_username": fields.String(description="user username"),
+        "creator_photo": fields.String(description="user profile photo filename"),
+        "parent_id": fields.String(description="post identifier"),
+        "parent_name": fields.String(description="post name"),
+        "parent_photo": fields.String(description="post photo")
     })
 
 class BusinessTypeDto:
@@ -145,7 +179,7 @@ class CircleDto:
                 "photo": fields.String(description="user profile photo filename", attribute="admin_photo"),
             })
         ), description="circle admin"),
-        "visitor_auth": fields.Integer(description="visiting user authorization")
+        "visitor_auth": fields.Integer(description="visiting user authorization"),
     })
 
 

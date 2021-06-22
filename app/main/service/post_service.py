@@ -1,25 +1,26 @@
+from app.main.model.comment import Comment
 from operator import pos
 import uuid
 import datetime
-from sqlalchemy.sql.expression import select
-
+from sqlalchemy.sql.expression import outerjoin, select
+from dateutil import parser
 from sqlalchemy.sql.functions import user
 from app.main import db
 from app.main.model.post import Post
-from app.main.model.user import User, circle_member_table, pet_follower_table, business_follower_table
+from app.main.model.user import User, circle_member_table, pet_follower_table, post_liker_table
 from app.main.model.pet import Pet
 from app.main.model.business import Business
 from app.main.model.circle import Circle
 from app.main.model.pet import post_subject_table
 from . import model_save_changes, table_save_changes
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 
 def save_new_post(user_pid, data):
     new_post_pid = str(uuid.uuid4())
     new_post = Post(
         public_id = new_post_pid,
         content = data.get("content"),
-        photo = data.get("photo"),
+        photo = data.get("photo")[0]["filename"],
         registered_on = datetime.datetime.utcnow(),
         user_creator_id = user_pid,
     )
@@ -82,7 +83,11 @@ def get_all_posts_by_user(requestor_pid, user_pid):
         dict(
             public_id = post[0],
             content = post[1],
-            photo = post[2],
+            photo = [
+                dict(
+                    photo_filename = post[2]
+                )
+            ] if post[2] else None,
             registered_on = post[3],
             creator_id = post[4],
             creator_name = post[5],
@@ -90,8 +95,10 @@ def get_all_posts_by_user(requestor_pid, user_pid):
             creator_photo = post[7],
             pinboard_id = post[8],
             pinboard_name = post[9],
-            confiner_id = post[10],
-            confiner_name = post[11],
+            pinboard_photo = post[10],
+            confiner_id = post[11],
+            confiner_name = post[12],
+            confiner_photo = post[13],
             subject = [
                 dict(
                     subject_id = subject[0],
@@ -105,6 +112,23 @@ def get_all_posts_by_user(requestor_pid, user_pid):
                     ).filter(post_subject_table.c.subject_pid==Pet.public_id
                     ).all()
             ],
+            like_count = db.session.query(
+                func.count(post_liker_table.c.public_id)
+            ).filter(
+                post_liker_table.c.post_pid == post[0]
+            ).filter(
+                post_liker_table.c.is_unliked == False
+            ).scalar(),
+            comment_count = Comment.query.filter_by(post_parent_id=post[0]).count(),
+            is_liked = 1 if db.session.query(
+                post_liker_table
+            ).filter(
+                post_liker_table.c.post_pid == post[0]
+            ).filter(
+                post_liker_table.c.liker_pid == requestor_pid
+            ).filter(
+                post_liker_table.c.is_unliked == False
+            ).first() else 0
         ) for post in db.session.query(
             Post.public_id,
             Post.content,
@@ -116,8 +140,10 @@ def get_all_posts_by_user(requestor_pid, user_pid):
             User.photo,
             Business.public_id,
             Business.name,
+            Business.photo,
             Circle.public_id,
-            Circle.name
+            Circle.name,
+            Circle.photo
         ).select_from(
             Post
         ).filter(
@@ -135,17 +161,27 @@ def get_all_posts_by_user(requestor_pid, user_pid):
         ).order_by(Post.registered_on.desc()).all()
     ]
 
-def get_all_posts_by_business(business_pid):
+def get_all_posts_by_business(requestor_pid, business_pid):
     return [
         dict(
             public_id = post[0],
             content = post[1],
-            photo = post[2],
+            photo = [
+                dict(
+                    photo_filename = post[2]
+                )
+            ] if post[2] else None,
             registered_on = post[3],
             creator_id = post[4],
             creator_name = post[5],
             creator_username = post[6],
             creator_photo = post[7],
+            pinboard_id = post[8],
+            pinboard_name = post[9],
+            pinboard_photo = post[10],
+            confiner_id = post[11],
+            confiner_name = post[12],
+            confiner_photo = post[13],
             subject = [
                 dict(
                     subject_id = subject[0],
@@ -158,7 +194,24 @@ def get_all_posts_by_business(business_pid):
                     ).filter(post_subject_table.c.post_pid==post[0]
                     ).filter(post_subject_table.c.subject_pid==Pet.public_id
                     ).all()
-            ]
+            ],
+            like_count = db.session.query(
+                func.count(post_liker_table.c.public_id)
+            ).filter(
+                post_liker_table.c.post_pid == post[0]
+            ).filter(
+                post_liker_table.c.is_unliked == False
+            ).scalar(),
+            comment_count = Comment.query.filter_by(post_parent_id=post[0]).count(),
+            is_liked = 1 if db.session.query(
+                post_liker_table
+            ).filter(
+                post_liker_table.c.post_pid == post[0]
+            ).filter(
+                post_liker_table.c.liker_pid == requestor_pid
+            ).filter(
+                post_liker_table.c.is_unliked == False
+            ).first() else 0
         ) for post in db.session.query(
             Post.public_id,
             Post.content,
@@ -167,11 +220,23 @@ def get_all_posts_by_business(business_pid):
             User.public_id,
             User.name,
             User.username,
-            User.photo
+            User.photo,
+            Business.public_id,
+            Business.name,
+            Business.photo,
+            Circle.public_id,
+            Circle.name,
+            Circle.photo
+        ).select_from(
+            Post
         ).filter(
             Post.business_pinboard_id == business_pid
-        ).filter(
-            Post.user_creator_id == User.public_id
+        ).outerjoin(
+            User
+        ).outerjoin(
+            Business
+        ).outerjoin(
+            Circle
         ).order_by(Post.registered_on.desc()).all()
     ]
 
@@ -194,12 +259,22 @@ def get_all_posts_by_pet(user_pid, pet_pid):
                 dict(
                     public_id = post[0],
                     content = post[1],
-                    photo = post[2],
+                    photo = [
+                        dict(
+                            photo_filename = post[2]
+                        )
+                    ] if post[2] else None,
                     registered_on = post[3],
                     creator_id = post[4],
                     creator_name = post[5],
                     creator_username = post[6],
                     creator_photo = post[7],
+                    pinboard_id = post[8],
+                    pinboard_name = post[9],
+                    pinboard_photo = post[10],
+                    confiner_id = post[11],
+                    confiner_name = post[12],
+                    confiner_photo = post[13],
                     subject = [
                         dict(
                             subject_id = subject[0],
@@ -212,7 +287,24 @@ def get_all_posts_by_pet(user_pid, pet_pid):
                             ).filter(post_subject_table.c.post_pid==post[0]
                             ).filter(post_subject_table.c.subject_pid==Pet.public_id
                             ).all()
-                    ]
+                    ],
+                    like_count = db.session.query(
+                        func.count(post_liker_table.c.public_id)
+                    ).filter(
+                        post_liker_table.c.post_pid == post[0]
+                    ).filter(
+                        post_liker_table.c.is_unliked == False
+                    ).scalar(),
+                    comment_count = Comment.query.filter_by(post_parent_id=post[0]).count(),
+                    is_liked = 1 if db.session.query(
+                        post_liker_table
+                    ).filter(
+                        post_liker_table.c.post_pid == post[0]
+                    ).filter(
+                        post_liker_table.c.liker_pid == user_pid
+                    ).filter(
+                        post_liker_table.c.is_unliked == False
+                    ).first() else 0
                 ) for post in db.session.query(
                     Post.public_id,
                     Post.content,
@@ -221,13 +313,21 @@ def get_all_posts_by_pet(user_pid, pet_pid):
                     User.public_id,
                     User.name,
                     User.username,
-                    User.photo
+                    User.photo,
+                    Business.public_id,
+                    Business.name,
+                    Business.photo,
+                    Circle.public_id,
+                    Circle.name,
+                    Circle.photo
                 ).filter(
                     Post.user_creator_id == User.public_id
                 ).filter(
                     post_subject_table.c.post_pid == Post.public_id
                 ).filter(
                     post_subject_table.c.subject_pid == pet_pid
+                ).outerjoin(
+                    Business
                 ).outerjoin(
                     Circle
                 ).outerjoin(
@@ -259,12 +359,22 @@ def get_all_posts_by_circle(requestor_pid, confiner_pid):
             dict(
                 public_id = post[0],
                 content = post[1],
-                photo = post[2],
+                photo = [
+                    dict(
+                        photo_filename = post[2]
+                    )
+                ] if post[2] else None,
                 registered_on = post[3],
                 creator_id = post[4],
                 creator_name = post[5],
                 creator_username = post[6],
                 creator_photo = post[7],
+                pinboard_id = post[8],
+                pinboard_name = post[9],
+                pinboard_photo = post[10],
+                confiner_id = post[11],
+                confiner_name = post[12],
+                confiner_photo = post[13],
                 subject = [
                     dict(
                         subject_id = subject[0],
@@ -277,7 +387,24 @@ def get_all_posts_by_circle(requestor_pid, confiner_pid):
                         ).filter(post_subject_table.c.post_pid==post[0]
                         ).filter(post_subject_table.c.subject_pid==Pet.public_id
                         ).all()
-                ]
+                ],
+                like_count = db.session.query(
+                    func.count(post_liker_table.c.public_id)
+                ).filter(
+                    post_liker_table.c.post_pid == post[0]
+                ).filter(
+                    post_liker_table.c.is_unliked == False
+                ).scalar(),
+                comment_count = Comment.query.filter_by(post_parent_id=post[0]).count(),
+                is_liked = 1 if db.session.query(
+                    post_liker_table
+                ).filter(
+                    post_liker_table.c.post_pid == post[0]
+                ).filter(
+                    post_liker_table.c.liker_pid == requestor_pid
+                ).filter(
+                    post_liker_table.c.is_unliked == False
+                ).first() else 0
             ) for post in db.session.query(
                 Post.public_id,
                 Post.content,
@@ -286,11 +413,23 @@ def get_all_posts_by_circle(requestor_pid, confiner_pid):
                 User.public_id,
                 User.name,
                 User.username,
-                User.photo
+                User.photo,
+                Business.public_id,
+                Business.name,
+                Business.photo,
+                Circle.public_id,
+                Circle.name,
+                Circle.photo
+            ).select_from(
+                Post
             ).filter(
                 Post.circle_confiner_id == confiner_pid
-            ).filter(
-                Post.user_creator_id == User.public_id
+            ).outerjoin(
+                User
+            ).outerjoin(
+                Business
+            ).outerjoin(
+                Circle
             ).order_by(Post.registered_on.desc()).all()
         ]
 
@@ -301,12 +440,16 @@ def get_all_posts_by_circle(requestor_pid, confiner_pid):
         }
         return response_object, 403
 
-def get_all_posts():
+def get_all_posts(requestor_pid):
     return [
         dict(
             public_id = post[0],
             content = post[1],
-            photo = post[2],
+            photo = [
+                dict(
+                    photo_filename = post[2]
+                )
+            ] if post[2] else None,
             registered_on = post[3],
             creator_id = post[4],
             creator_name = post[5],
@@ -324,7 +467,24 @@ def get_all_posts():
                     ).filter(post_subject_table.c.post_pid==post[0]
                     ).filter(post_subject_table.c.subject_pid==Pet.public_id
                     ).all()
-            ]
+            ],
+            like_count = db.session.query(
+                func.count(post_liker_table.c.public_id)
+            ).filter(
+                post_liker_table.c.post_pid == post[0]
+            ).filter(
+                post_liker_table.c.is_unliked == False
+            ).scalar(),
+            comment_count = Comment.query.filter_by(post_parent_id=post[0]).count(),
+            is_liked = 1 if db.session.query(
+                post_liker_table
+            ).filter(
+                post_liker_table.c.post_pid == post[0]
+            ).filter(
+                post_liker_table.c.liker_pid == requestor_pid
+            ).filter(
+                post_liker_table.c.is_unliked == False
+            ).first() else 0
         ) for post in db.session.query(
             Post.public_id,
             Post.content,
@@ -343,7 +503,7 @@ def get_all_posts():
         ).order_by(Post.registered_on.desc()).all()
     ]
 
-def get_a_post(public_id):
+def get_a_post(requestor_pid, public_id):
     post = db.session.query(
         Post.public_id,
         Post.content,
@@ -363,7 +523,11 @@ def get_a_post(public_id):
         return dict(
             public_id = post[0],
             content = post[1],
-            photo = post[2],
+            photo = [
+                dict(
+                    photo_filename = post[2]
+                )
+            ] if post[2] else None,
             registered_on = post[3],
             creator_id = post[4],
             creator_name = post[5],
@@ -381,7 +545,24 @@ def get_a_post(public_id):
                     ).filter(post_subject_table.c.post_pid==post[0]
                     ).filter(post_subject_table.c.subject_pid==Pet.public_id
                     ).all()
-            ]
+            ],
+            like_count = db.session.query(
+                func.count(post_liker_table.c.public_id)
+            ).filter(
+                post_liker_table.c.post_pid == post[0]
+            ).filter(
+                post_liker_table.c.is_unliked == False
+            ).scalar(),
+            comment_count = Comment.query.filter_by(post_parent_id=post[0]).count(),
+            is_liked = 1 if db.session.query(
+                post_liker_table
+            ).filter(
+                post_liker_table.c.post_pid == post[0]
+            ).filter(
+                post_liker_table.c.liker_pid == requestor_pid
+            ).filter(
+                post_liker_table.c.is_unliked == False
+            ).first() else 0
         )
 
 def delete_a_post(public_id, user_pid):
@@ -401,6 +582,51 @@ def delete_a_post(public_id, user_pid):
                 'message': 'Not match or no authorization.'
             }
             return response_object, 400
+    else:
+        response_object = {
+            'status': 'fail',
+            'message': 'No post found.'
+        }
+        return response_object, 404
+
+def like_a_post(requestor_pid, post_pid):
+    post = Post.query.filter_by(public_id=post_pid).first()
+
+    if post:
+        this_like = db.session.query(
+            post_liker_table
+        ).filter(
+            post_liker_table.c.post_pid == post_pid
+        ).filter(
+            post_liker_table.c.liker_pid == requestor_pid
+        ).first()
+
+        if not this_like:
+            statement = post_liker_table.insert().values(
+                public_id=str(uuid.uuid4()),
+                post_pid=post_pid,
+                liker_pid=requestor_pid
+            )
+            table_save_changes(statement)
+            response_object = {
+                'status': 'success',
+                'message': 'Post successfully liked.'
+            }
+            return response_object, 201
+        else:
+            statement = post_liker_table.update().where(
+                post_liker_table.c.post_pid==post_pid
+            ).where(
+                post_liker_table.c.liker_pid==requestor_pid
+            ).values(
+                is_unliked = True if this_like.is_unliked is False else False
+            )
+            table_save_changes(statement)
+            response_object = {
+                'status': 'success',
+                'message': 'Post successfully {}.'.format("liked" if this_like.is_unliked is False else "unliked")
+            }
+            return response_object, 201
     else:
         response_object = {
             'status': 'fail',

@@ -3,7 +3,7 @@ from flask_restx import Resource
 
 from ..util.dto import PostDto
 from ..util.decorator import *
-from ..service.post_service import save_new_post, get_all_posts, get_all_posts_by_user, get_a_post, delete_a_post, get_all_posts_by_business, get_all_posts_by_circle, get_all_posts_by_pet
+from ..service.post_service import like_a_post, save_new_post, get_all_posts, get_all_posts_by_user, get_a_post, delete_a_post, get_all_posts_by_business, get_all_posts_by_circle, get_all_posts_by_pet
 
 api = PostDto.api
 _post = PostDto.post
@@ -16,7 +16,7 @@ class PostList(Resource):
     @api.marshal_list_with(_post, envelope='data')
     def get(self, user_pid):
         """List all registered posts"""
-        return get_all_posts()
+        return get_all_posts(user_pid)
 
     @token_required
     @api.response(201, 'Post successfully created.')
@@ -55,7 +55,7 @@ class PostListByBusiness(Resource):
     @api.marshal_list_with(_post, envelope='data')
     def get(self, user_pid, pinboard_id):
         """List all registered posts"""
-        return get_all_posts_by_business(pinboard_id)
+        return get_all_posts_by_business(user_pid, pinboard_id)
 
 @api.route('/confiner/<confiner_id>')
 @api.param("confiner_id", "The Circle public identifier")
@@ -76,11 +76,17 @@ class Post(Resource):
     @api.marshal_with(_post)
     def get(self, user_pid, public_id):
         """get a post given its identifier"""
-        post = get_a_post(public_id)
+        post = get_a_post(user_pid, public_id)
         if not post:
             api.abort(404)
         else:
             return post
+
+    @token_required
+    @api.doc('like a post')
+    def post(self, user_pid, public_id):
+        """like a post given its identifier"""
+        return like_a_post(user_pid, public_id)
 
     @token_required
     @api.response(201, 'Post successfully deleted.')

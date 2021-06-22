@@ -33,6 +33,15 @@ business_follower_table = db.Table('business_executive_table',
     db.Column('registered_on', db.DateTime, nullable=False, default=datetime.datetime.utcnow)
 )
 
+post_liker_table = db.Table('post_liker_table',
+    db.Column('id', db.Integer, primary_key=True, autoincrement=True),
+    db.Column('public_id', db.String(100), unique=True),
+    db.Column('post_pid', db.String(100), db.ForeignKey('post.public_id')),
+    db.Column('liker_pid', db.String(100), db.ForeignKey('user.public_id')),
+    db.Column('is_unliked', db.Boolean, default=False),
+    db.Column('registered_on', db.DateTime, nullable=False, default=datetime.datetime.utcnow)
+)
+
 class User(db.Model):
     """ User Model for storing user related details """
     __tablename__ = "user"

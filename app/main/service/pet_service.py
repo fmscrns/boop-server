@@ -135,7 +135,7 @@ def get_all_pets_by_user(requestor_pid, user_pid, tag_suggestions):
         ).filter(
             pet_follower_table.c.follower_pid == user_pid
         ).filter(
-            or_(pet_follower_table.c.is_owner == True, pet_follower_table.c.is_accepted == True) if tag_suggestions == 1 else pet_follower_table.c.is_owner == True
+            or_(pet_follower_table.c.is_owner == True, pet_follower_table.c.is_accepted == True) if tag_suggestions == "1" else pet_follower_table.c.is_owner == True
         ).outerjoin(
             Pet
         ).outerjoin(
