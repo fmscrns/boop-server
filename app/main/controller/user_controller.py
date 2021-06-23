@@ -102,7 +102,6 @@ class UserByToken(Resource):
         """get current user given its token"""
         auth_header = request.headers.get('Authorization')
         get_resp = get_by_token(auth_header.split(" ")[1])
-
         if isinstance(get_resp, str):
             api.abort(401, message=get_resp)
         else:

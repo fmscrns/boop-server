@@ -13,6 +13,7 @@ class UserDto:
         'password': fields.String(required=True, description='user password', pattern='^(?!\s*$).+'),
         'public_id': fields.String(description='user Identifier'),
         "photo": fields.String(description="user profile photo"),
+        "pet_count": fields.Integer(description="user pet count")
     })
 
 class SpecieDto:
@@ -51,6 +52,7 @@ class PetDto:
         "is_private": fields.Integer(required=True, description="pet privacy", min=-1, max=1),
         "photo": fields.String(description="pet profile photo filename"),
         "registered_on": fields.DateTime(dt_format="rfc822", required=False, description="creation date"),
+        "group_id": fields.String(required=True, description="specie  identifier"),
         "group_name": fields.String(description="specie name"),
         "subgroup_id": fields.String(required=True, description="breed identifier"),
         "subgroup_name": fields.String(description="breed name"),
@@ -116,9 +118,14 @@ class PostDto:
         "confiner_photo": fields.String(description="circle photo"),
         "subject": fields.List(fields.Nested(
             api.model("subject", {
-                "public_id": fields.String(description="pet identifier", attribute="subject_id"),
+                "public_id": fields.String(required=True, description="pet identifier", attribute="subject_id"),
                 "name": fields.String(description="pet name", attribute="subject_name"),
-                "photo": fields.String(description="pet profile photo filename", attribute="subject_photo")
+                "photo": fields.String(description="pet profile photo filename", attribute="subject_photo"),
+                "group_id": fields.String(description="specie  identifier"),
+                "group_name": fields.String(description="specie name"),
+                "subgroup_id": fields.String(description="breed identifier"),
+                "subgroup_name": fields.String(description="breed name"),
+                "visitor_auth": fields.Integer(description="visiting user authorization")
             })
         ), description="post subject", required=True),
         "like_count": fields.Integer(description="post like count"),

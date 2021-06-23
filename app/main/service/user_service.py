@@ -1,8 +1,8 @@
 import uuid
 import datetime
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from app.main import db
-from app.main.model.user import User
+from app.main.model.user import User, pet_follower_table
 
 def save_new_user(data, admin=False):
     user = User.query.filter_by(email=data['email']).first()
@@ -49,13 +49,34 @@ def get_all_by_search(value):
             User.username.ilike("%{}%".format(value)))
         ).filter(
             User.admin != True
-        # ).filter(
-        #     User.username.ilike("%{}%".format(value))
         ).all()
     ]
 
 def get_a_user(public_id):
-    return User.query.filter_by(public_id=public_id).first()
+    user = db.session.query(
+        User.public_id,
+        User.name,
+        User.username,
+        User.photo
+    ).filter(
+        User.public_id == public_id
+    ).filter(
+        User.admin != True
+    ).first()
+    if user:
+        return dict(
+            public_id = user[0],
+            name = user[1],
+            username = user[2],
+            photo = user[3],
+            pet_count = db.session.query(
+                func.count(pet_follower_table.c.public_id)
+            ).filter(
+                pet_follower_table.c.follower_pid == public_id
+            ).filter(
+                pet_follower_table.c.is_owner == True
+            ).scalar()
+        )
 
 def get_by_email(email):
     return User.query.filter_by(email=email).first() 
@@ -66,7 +87,30 @@ def get_by_username(username):
 def get_by_token(auth_token):
     decoded_resp = User.decode_auth_token(auth_token)
     if isinstance(decoded_resp, int):
-        return User.query.filter_by(id=decoded_resp).first()
+        user = db.session.query(
+            User.public_id,
+            User.name,
+            User.username,
+            User.photo
+        ).filter(
+            User.id == decoded_resp
+        ).filter(
+            User.admin != True
+        ).first()
+        if user:
+            return dict(
+                public_id = user[0],
+                name = user[1],
+                username = user[2],
+                photo = user[3],
+                pet_count = db.session.query(
+                    func.count(pet_follower_table.c.public_id)
+                ).filter(
+                    pet_follower_table.c.follower_pid == user[0]
+                ).filter(
+                    pet_follower_table.c.is_owner == True
+                ).scalar()
+            )
     return decoded_resp
 
 def patch_a_user(public_id, auth_token, data):

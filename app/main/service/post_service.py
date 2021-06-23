@@ -1,3 +1,5 @@
+from app.main.model.specie import Specie
+from app.main.model.breed import Breed
 from app.main.model.comment import Comment
 from operator import pos
 import uuid
@@ -20,7 +22,10 @@ def save_new_post(user_pid, data):
     new_post = Post(
         public_id = new_post_pid,
         content = data.get("content"),
-        photo = data.get("photo")[0]["filename"],
+        photo_1 = data.get("photo")[0]["filename"] if len(data.get("photo")) >= 1 else None,
+        photo_2 = data.get("photo")[1]["filename"] if len(data.get("photo")) >= 2 else None,
+        photo_3 = data.get("photo")[2]["filename"] if len(data.get("photo")) >= 3 else None,
+        photo_4 = data.get("photo")[3]["filename"] if len(data.get("photo")) == 4 else None,
         registered_on = datetime.datetime.utcnow(),
         user_creator_id = user_pid,
     )
@@ -85,32 +90,81 @@ def get_all_posts_by_user(requestor_pid, user_pid):
             content = post[1],
             photo = [
                 dict(
-                    photo_filename = post[2]
-                )
-            ] if post[2] else None,
-            registered_on = post[3],
-            creator_id = post[4],
-            creator_name = post[5],
-            creator_username = post[6],
-            creator_photo = post[7],
-            pinboard_id = post[8],
-            pinboard_name = post[9],
-            pinboard_photo = post[10],
-            confiner_id = post[11],
-            confiner_name = post[12],
-            confiner_photo = post[13],
+                    photo_filename = photo
+                ) for photo in [
+                    post[2], post[3], post[4], post[5]
+                ] if photo
+            ],
+            registered_on = post[6],
+            creator_id = post[7],
+            creator_name = post[8],
+            creator_username = post[9],
+            creator_photo = post[10],
+            pinboard_id = post[11],
+            pinboard_name = post[12],
+            pinboard_photo = post[13],
+            confiner_id = post[14],
+            confiner_name = post[15],
+            confiner_photo = post[16],
             subject = [
                 dict(
                     subject_id = subject[0],
                     subject_name = subject[1],
-                    subject_photo = subject[2]
+                    subject_photo = subject[2],
+                    group_id = subject[3],
+                    group_name = subject[4],
+                    subgroup_id = subject[5],
+                    subgroup_name = subject[6],
+                    visitor_auth = 3 if db.session.query(
+                        pet_follower_table
+                    ).filter(
+                        pet_follower_table.c.follower_pid == requestor_pid
+                    ).filter(
+                        pet_follower_table.c.is_owner == True
+                    ).filter(
+                        pet_follower_table.c.pet_pid == subject[0]
+                    ).filter(
+                        pet_follower_table.c.is_accepted == True
+                    ).first() else 2 if db.session.query(
+                        pet_follower_table
+                    ).filter(
+                        pet_follower_table.c.follower_pid == requestor_pid
+                    ).filter(
+                        pet_follower_table.c.is_owner == False
+                    ).filter(
+                        pet_follower_table.c.pet_pid == subject[0]
+                    ).filter(
+                        pet_follower_table.c.is_accepted == True
+                    ).first() else 1 if db.session.query(
+                        pet_follower_table
+                    ).filter(
+                        pet_follower_table.c.follower_pid == requestor_pid
+                    ).filter(
+                        pet_follower_table.c.is_owner == False
+                    ).filter(
+                        pet_follower_table.c.pet_pid == subject[0]
+                    ).filter(
+                        pet_follower_table.c.is_accepted == False
+                    ).first() else 0,
                 ) for subject in db.session.query(
                     Pet.public_id, 
                     Pet.name,
-                    Pet.photo
-                    ).filter(post_subject_table.c.post_pid==post[0]
-                    ).filter(post_subject_table.c.subject_pid==Pet.public_id
-                    ).all()
+                    Pet.photo,
+                    Specie.public_id,
+                    Specie.name,
+                    Breed.public_id,
+                    Breed.name,
+                ).select_from(
+                    post_subject_table
+                ).filter(
+                    post_subject_table.c.post_pid==post[0]
+                ).outerjoin(
+                    Pet
+                ).outerjoin(
+                    Breed
+                ).outerjoin(
+                    Specie
+                ).order_by(Pet.registered_on.desc()).all()
             ],
             like_count = db.session.query(
                 func.count(post_liker_table.c.public_id)
@@ -132,7 +186,10 @@ def get_all_posts_by_user(requestor_pid, user_pid):
         ) for post in db.session.query(
             Post.public_id,
             Post.content,
-            Post.photo,
+            Post.photo_1,
+            Post.photo_2,
+            Post.photo_3,
+            Post.photo_4,
             Post.registered_on,
             User.public_id,
             User.name,
@@ -149,6 +206,8 @@ def get_all_posts_by_user(requestor_pid, user_pid):
         ).filter(
             Post.user_creator_id == user_pid
         ).outerjoin(
+            User
+        ).outerjoin(
             Business
         ).outerjoin(
             Circle
@@ -156,8 +215,8 @@ def get_all_posts_by_user(requestor_pid, user_pid):
             circle_member_table
         ).filter(
             or_(Post.circle_confiner_id == None, circle_member_table.c.member_pid == requestor_pid)
-        ).filter(
-            Post.user_creator_id == User.public_id
+        # ).filter(
+        #     Post.user_creator_id == User.public_id
         ).order_by(Post.registered_on.desc()).all()
     ]
 
@@ -168,32 +227,81 @@ def get_all_posts_by_business(requestor_pid, business_pid):
             content = post[1],
             photo = [
                 dict(
-                    photo_filename = post[2]
-                )
-            ] if post[2] else None,
-            registered_on = post[3],
-            creator_id = post[4],
-            creator_name = post[5],
-            creator_username = post[6],
-            creator_photo = post[7],
-            pinboard_id = post[8],
-            pinboard_name = post[9],
-            pinboard_photo = post[10],
-            confiner_id = post[11],
-            confiner_name = post[12],
-            confiner_photo = post[13],
+                    photo_filename = photo
+                ) for photo in [
+                    post[2], post[3], post[4], post[5]
+                ] if photo is not None
+            ],
+            registered_on = post[6],
+            creator_id = post[7],
+            creator_name = post[8],
+            creator_username = post[9],
+            creator_photo = post[10],
+            pinboard_id = post[11],
+            pinboard_name = post[12],
+            pinboard_photo = post[13],
+            confiner_id = post[14],
+            confiner_name = post[15],
+            confiner_photo = post[16],
             subject = [
                 dict(
                     subject_id = subject[0],
                     subject_name = subject[1],
-                    subject_photo = subject[2]
+                    subject_photo = subject[2],
+                    group_id = subject[3],
+                    group_name = subject[4],
+                    subgroup_id = subject[5],
+                    subgroup_name = subject[6],
+                    visitor_auth = 3 if db.session.query(
+                        pet_follower_table
+                    ).filter(
+                        pet_follower_table.c.follower_pid == requestor_pid
+                    ).filter(
+                        pet_follower_table.c.is_owner == True
+                    ).filter(
+                        pet_follower_table.c.pet_pid == subject[0]
+                    ).filter(
+                        pet_follower_table.c.is_accepted == True
+                    ).first() else 2 if db.session.query(
+                        pet_follower_table
+                    ).filter(
+                        pet_follower_table.c.follower_pid == requestor_pid
+                    ).filter(
+                        pet_follower_table.c.is_owner == False
+                    ).filter(
+                        pet_follower_table.c.pet_pid == subject[0]
+                    ).filter(
+                        pet_follower_table.c.is_accepted == True
+                    ).first() else 1 if db.session.query(
+                        pet_follower_table
+                    ).filter(
+                        pet_follower_table.c.follower_pid == requestor_pid
+                    ).filter(
+                        pet_follower_table.c.is_owner == False
+                    ).filter(
+                        pet_follower_table.c.pet_pid == subject[0]
+                    ).filter(
+                        pet_follower_table.c.is_accepted == False
+                    ).first() else 0,
                 ) for subject in db.session.query(
                     Pet.public_id, 
                     Pet.name,
-                    Pet.photo
-                    ).filter(post_subject_table.c.post_pid==post[0]
-                    ).filter(post_subject_table.c.subject_pid==Pet.public_id
-                    ).all()
+                    Pet.photo,
+                    Specie.public_id,
+                    Specie.name,
+                    Breed.public_id,
+                    Breed.name,
+                ).select_from(
+                    post_subject_table
+                ).filter(
+                    post_subject_table.c.post_pid==post[0]
+                ).outerjoin(
+                    Pet
+                ).outerjoin(
+                    Breed
+                ).outerjoin(
+                    Specie
+                ).order_by(Pet.registered_on.desc()).all()
             ],
             like_count = db.session.query(
                 func.count(post_liker_table.c.public_id)
@@ -215,7 +323,10 @@ def get_all_posts_by_business(requestor_pid, business_pid):
         ) for post in db.session.query(
             Post.public_id,
             Post.content,
-            Post.photo,
+            Post.photo_1,
+            Post.photo_2,
+            Post.photo_3,
+            Post.photo_4,
             Post.registered_on,
             User.public_id,
             User.name,
@@ -240,7 +351,7 @@ def get_all_posts_by_business(requestor_pid, business_pid):
         ).order_by(Post.registered_on.desc()).all()
     ]
 
-def get_all_posts_by_pet(user_pid, pet_pid):
+def get_all_posts_by_pet(user_pid, pet_pid, w_media_only):
     pet = Pet.query.filter_by(public_id=pet_pid).first()
     
     follower = db.session.query(
@@ -261,32 +372,81 @@ def get_all_posts_by_pet(user_pid, pet_pid):
                     content = post[1],
                     photo = [
                         dict(
-                            photo_filename = post[2]
-                        )
-                    ] if post[2] else None,
-                    registered_on = post[3],
-                    creator_id = post[4],
-                    creator_name = post[5],
-                    creator_username = post[6],
-                    creator_photo = post[7],
-                    pinboard_id = post[8],
-                    pinboard_name = post[9],
-                    pinboard_photo = post[10],
-                    confiner_id = post[11],
-                    confiner_name = post[12],
-                    confiner_photo = post[13],
+                            photo_filename = photo
+                        ) for photo in [
+                            post[2], post[3], post[4], post[5]
+                        ] if photo
+                    ],
+                    registered_on = post[6],
+                    creator_id = post[7],
+                    creator_name = post[8],
+                    creator_username = post[9],
+                    creator_photo = post[10],
+                    pinboard_id = post[11],
+                    pinboard_name = post[12],
+                    pinboard_photo = post[13],
+                    confiner_id = post[14],
+                    confiner_name = post[15],
+                    confiner_photo = post[16],
                     subject = [
                         dict(
                             subject_id = subject[0],
                             subject_name = subject[1],
-                            subject_photo = subject[2]
+                            subject_photo = subject[2],
+                            group_id = subject[3],
+                            group_name = subject[4],
+                            subgroup_id = subject[5],
+                            subgroup_name = subject[6],
+                            visitor_auth = 3 if db.session.query(
+                                pet_follower_table
+                            ).filter(
+                                pet_follower_table.c.follower_pid == user_pid
+                            ).filter(
+                                pet_follower_table.c.is_owner == True
+                            ).filter(
+                                pet_follower_table.c.pet_pid == subject[0]
+                            ).filter(
+                                pet_follower_table.c.is_accepted == True
+                            ).first() else 2 if db.session.query(
+                                pet_follower_table
+                            ).filter(
+                                pet_follower_table.c.follower_pid == user_pid
+                            ).filter(
+                                pet_follower_table.c.is_owner == False
+                            ).filter(
+                                pet_follower_table.c.pet_pid == subject[0]
+                            ).filter(
+                                pet_follower_table.c.is_accepted == True
+                            ).first() else 1 if db.session.query(
+                                pet_follower_table
+                            ).filter(
+                                pet_follower_table.c.follower_pid == user_pid
+                            ).filter(
+                                pet_follower_table.c.is_owner == False
+                            ).filter(
+                                pet_follower_table.c.pet_pid == subject[0]
+                            ).filter(
+                                pet_follower_table.c.is_accepted == False
+                            ).first() else 0,
                         ) for subject in db.session.query(
                             Pet.public_id, 
                             Pet.name,
-                            Pet.photo
-                            ).filter(post_subject_table.c.post_pid==post[0]
-                            ).filter(post_subject_table.c.subject_pid==Pet.public_id
-                            ).all()
+                            Pet.photo,
+                            Specie.public_id,
+                            Specie.name,
+                            Breed.public_id,
+                            Breed.name,
+                        ).select_from(
+                            post_subject_table
+                        ).filter(
+                            post_subject_table.c.post_pid==post[0]
+                        ).outerjoin(
+                            Pet
+                        ).outerjoin(
+                            Breed
+                        ).outerjoin(
+                            Specie
+                        ).order_by(Pet.registered_on.desc()).all()
                     ],
                     like_count = db.session.query(
                         func.count(post_liker_table.c.public_id)
@@ -308,7 +468,10 @@ def get_all_posts_by_pet(user_pid, pet_pid):
                 ) for post in db.session.query(
                     Post.public_id,
                     Post.content,
-                    Post.photo,
+                    Post.photo_1,
+                    Post.photo_2,
+                    Post.photo_3,
+                    Post.photo_4,
                     Post.registered_on,
                     User.public_id,
                     User.name,
@@ -334,6 +497,8 @@ def get_all_posts_by_pet(user_pid, pet_pid):
                     circle_member_table
                 ).filter(
                     or_(Post.circle_confiner_id == None, circle_member_table.c.member_pid == user_pid)
+                ).filter(
+                    ((Post.photo_1 != None) if w_media_only == "1" else or_(Post.photo_1 == None, Post.photo_1 != None))
                 ).order_by(Post.registered_on.desc()).all()
             ]
         else:
@@ -361,32 +526,81 @@ def get_all_posts_by_circle(requestor_pid, confiner_pid):
                 content = post[1],
                 photo = [
                     dict(
-                        photo_filename = post[2]
-                    )
-                ] if post[2] else None,
-                registered_on = post[3],
-                creator_id = post[4],
-                creator_name = post[5],
-                creator_username = post[6],
-                creator_photo = post[7],
-                pinboard_id = post[8],
-                pinboard_name = post[9],
-                pinboard_photo = post[10],
-                confiner_id = post[11],
-                confiner_name = post[12],
-                confiner_photo = post[13],
+                        photo_filename = photo
+                    ) for photo in [
+                        post[2], post[3], post[4], post[5]
+                    ] if photo is not None
+                ],
+                registered_on = post[6],
+                creator_id = post[7],
+                creator_name = post[8],
+                creator_username = post[9],
+                creator_photo = post[10],
+                pinboard_id = post[11],
+                pinboard_name = post[12],
+                pinboard_photo = post[13],
+                confiner_id = post[14],
+                confiner_name = post[15],
+                confiner_photo = post[16],
                 subject = [
                     dict(
                         subject_id = subject[0],
                         subject_name = subject[1],
-                        subject_photo = subject[2]
+                        subject_photo = subject[2],
+                        group_id = subject[3],
+                        group_name = subject[4],
+                        subgroup_id = subject[5],
+                        subgroup_name = subject[6],
+                        visitor_auth = 3 if db.session.query(
+                            pet_follower_table
+                        ).filter(
+                            pet_follower_table.c.follower_pid == requestor_pid
+                        ).filter(
+                            pet_follower_table.c.is_owner == True
+                        ).filter(
+                            pet_follower_table.c.pet_pid == subject[0]
+                        ).filter(
+                            pet_follower_table.c.is_accepted == True
+                        ).first() else 2 if db.session.query(
+                            pet_follower_table
+                        ).filter(
+                            pet_follower_table.c.follower_pid == requestor_pid
+                        ).filter(
+                            pet_follower_table.c.is_owner == False
+                        ).filter(
+                            pet_follower_table.c.pet_pid == subject[0]
+                        ).filter(
+                            pet_follower_table.c.is_accepted == True
+                        ).first() else 1 if db.session.query(
+                            pet_follower_table
+                        ).filter(
+                            pet_follower_table.c.follower_pid == requestor_pid
+                        ).filter(
+                            pet_follower_table.c.is_owner == False
+                        ).filter(
+                            pet_follower_table.c.pet_pid == subject[0]
+                        ).filter(
+                            pet_follower_table.c.is_accepted == False
+                        ).first() else 0,
                     ) for subject in db.session.query(
                         Pet.public_id, 
                         Pet.name,
-                        Pet.photo
-                        ).filter(post_subject_table.c.post_pid==post[0]
-                        ).filter(post_subject_table.c.subject_pid==Pet.public_id
-                        ).all()
+                        Pet.photo,
+                        Specie.public_id,
+                        Specie.name,
+                        Breed.public_id,
+                        Breed.name,
+                    ).select_from(
+                        post_subject_table
+                    ).filter(
+                        post_subject_table.c.post_pid==post[0]
+                    ).outerjoin(
+                        Pet
+                    ).outerjoin(
+                        Breed
+                    ).outerjoin(
+                        Specie
+                    ).order_by(Pet.registered_on.desc()).all()
                 ],
                 like_count = db.session.query(
                     func.count(post_liker_table.c.public_id)
@@ -408,7 +622,10 @@ def get_all_posts_by_circle(requestor_pid, confiner_pid):
             ) for post in db.session.query(
                 Post.public_id,
                 Post.content,
-                Post.photo,
+                Post.photo_1,
+                Post.photo_2,
+                Post.photo_3,
+                Post.photo_4,
                 Post.registered_on,
                 User.public_id,
                 User.name,
@@ -447,26 +664,81 @@ def get_all_posts(requestor_pid):
             content = post[1],
             photo = [
                 dict(
-                    photo_filename = post[2]
-                )
-            ] if post[2] else None,
-            registered_on = post[3],
-            creator_id = post[4],
-            creator_name = post[5],
-            creator_username = post[6],
-            creator_photo = post[7],
+                    photo_filename = photo
+                ) for photo in [
+                    post[2], post[3], post[4], post[5]
+                ] if photo is not None
+            ],
+            registered_on = post[6],
+            creator_id = post[7],
+            creator_name = post[8],
+            creator_username = post[9],
+            creator_photo = post[10],
+            pinboard_id = post[11],
+            pinboard_name = post[12],
+            pinboard_photo = post[13],
+            confiner_id = post[14],
+            confiner_name = post[15],
+            confiner_photo = post[16],
             subject = [
                 dict(
                     subject_id = subject[0],
                     subject_name = subject[1],
-                    subject_photo = subject[2]
+                    subject_photo = subject[2],
+                    group_id = subject[3],
+                    group_name = subject[4],
+                    subgroup_id = subject[5],
+                    subgroup_name = subject[6],
+                    visitor_auth = 3 if db.session.query(
+                        pet_follower_table
+                    ).filter(
+                        pet_follower_table.c.follower_pid == requestor_pid
+                    ).filter(
+                        pet_follower_table.c.is_owner == True
+                    ).filter(
+                        pet_follower_table.c.pet_pid == subject[0]
+                    ).filter(
+                        pet_follower_table.c.is_accepted == True
+                    ).first() else 2 if db.session.query(
+                        pet_follower_table
+                    ).filter(
+                        pet_follower_table.c.follower_pid == requestor_pid
+                    ).filter(
+                        pet_follower_table.c.is_owner == False
+                    ).filter(
+                        pet_follower_table.c.pet_pid == subject[0]
+                    ).filter(
+                        pet_follower_table.c.is_accepted == True
+                    ).first() else 1 if db.session.query(
+                        pet_follower_table
+                    ).filter(
+                        pet_follower_table.c.follower_pid == requestor_pid
+                    ).filter(
+                        pet_follower_table.c.is_owner == False
+                    ).filter(
+                        pet_follower_table.c.pet_pid == subject[0]
+                    ).filter(
+                        pet_follower_table.c.is_accepted == False
+                    ).first() else 0,
                 ) for subject in db.session.query(
                     Pet.public_id, 
                     Pet.name,
-                    Pet.photo
-                    ).filter(post_subject_table.c.post_pid==post[0]
-                    ).filter(post_subject_table.c.subject_pid==Pet.public_id
-                    ).all()
+                    Pet.photo,
+                    Specie.public_id,
+                    Specie.name,
+                    Breed.public_id,
+                    Breed.name,
+                ).select_from(
+                    post_subject_table
+                ).filter(
+                    post_subject_table.c.post_pid==post[0]
+                ).outerjoin(
+                    Pet
+                ).outerjoin(
+                    Breed
+                ).outerjoin(
+                    Specie
+                ).order_by(Pet.registered_on.desc()).all()
             ],
             like_count = db.session.query(
                 func.count(post_liker_table.c.public_id)
@@ -488,18 +760,62 @@ def get_all_posts(requestor_pid):
         ) for post in db.session.query(
             Post.public_id,
             Post.content,
-            Post.photo,
+            Post.photo_1,
+            Post.photo_2,
+            Post.photo_3,
+            Post.photo_4,
             Post.registered_on,
             User.public_id,
             User.name,
             User.username,
-            User.photo
+            User.photo,
+            Business.public_id,
+            Business.name,
+            Business.photo,
+            Circle.public_id,
+            Circle.name,
+            Circle.photo,
+            func.count(post_subject_table.c.subject_pid)
+        ).select_from(
+            Post
+        ).outerjoin(
+            post_subject_table
+        ).outerjoin(
+            Pet
+        ).outerjoin(
+            pet_follower_table
         ).filter(
-            Post.user_creator_id == User.public_id
+            pet_follower_table.c.is_accepted == True
         ).filter(
-            Post.business_pinboard_id == None
+            pet_follower_table.c.follower_pid == requestor_pid
+        ).outerjoin(
+            User
+        ).outerjoin(
+            Business
+        ).outerjoin(
+            Circle
+        ).outerjoin(
+            circle_member_table
         ).filter(
-            Post.circle_confiner_id == None
+            or_(Post.circle_confiner_id == None, circle_member_table.c.member_pid == requestor_pid)
+        ).group_by(
+            Post.public_id,
+            Post.content,
+            Post.photo_1,
+            Post.photo_2,
+            Post.photo_3,
+            Post.photo_4,
+            Post.registered_on,
+            User.public_id,
+            User.name,
+            User.username,
+            User.photo,
+            Business.public_id,
+            Business.name,
+            Business.photo,
+            Circle.public_id,
+            Circle.name,
+            Circle.photo
         ).order_by(Post.registered_on.desc()).all()
     ]
 
@@ -507,12 +823,21 @@ def get_a_post(requestor_pid, public_id):
     post = db.session.query(
         Post.public_id,
         Post.content,
-        Post.photo,
+        Post.photo_1,
+        Post.photo_2,
+        Post.photo_3,
+        Post.photo_4,
         Post.registered_on,
         User.public_id,
         User.name,
         User.username,
-        User.photo
+        User.photo,
+        Business.public_id,
+        Business.name,
+        Business.photo,
+        Circle.public_id,
+        Circle.name,
+        Circle.photo
     ).filter(
         Post.public_id == public_id
     ).filter(
@@ -525,26 +850,81 @@ def get_a_post(requestor_pid, public_id):
             content = post[1],
             photo = [
                 dict(
-                    photo_filename = post[2]
-                )
-            ] if post[2] else None,
-            registered_on = post[3],
-            creator_id = post[4],
-            creator_name = post[5],
-            creator_username = post[6],
-            creator_photo = post[7],
+                    photo_filename = photo
+                ) for photo in [
+                    post[2], post[3], post[4], post[5]
+                ] if photo
+            ],
+            registered_on = post[6],
+            creator_id = post[7],
+            creator_name = post[8],
+            creator_username = post[9],
+            creator_photo = post[10],
+            pinboard_id = post[11],
+            pinboard_name = post[12],
+            pinboard_photo = post[13],
+            confiner_id = post[14],
+            confiner_name = post[15],
+            confiner_photo = post[16],
             subject = [
                 dict(
                     subject_id = subject[0],
                     subject_name = subject[1],
-                    subject_photo = subject[2]
+                    subject_photo = subject[2],
+                    group_id = subject[3],
+                    group_name = subject[4],
+                    subgroup_id = subject[5],
+                    subgroup_name = subject[6],
+                    visitor_auth = 3 if db.session.query(
+                        pet_follower_table
+                    ).filter(
+                        pet_follower_table.c.follower_pid == requestor_pid
+                    ).filter(
+                        pet_follower_table.c.is_owner == True
+                    ).filter(
+                        pet_follower_table.c.pet_pid == subject[0]
+                    ).filter(
+                        pet_follower_table.c.is_accepted == True
+                    ).first() else 2 if db.session.query(
+                        pet_follower_table
+                    ).filter(
+                        pet_follower_table.c.follower_pid == requestor_pid
+                    ).filter(
+                        pet_follower_table.c.is_owner == False
+                    ).filter(
+                        pet_follower_table.c.pet_pid == subject[0]
+                    ).filter(
+                        pet_follower_table.c.is_accepted == True
+                    ).first() else 1 if db.session.query(
+                        pet_follower_table
+                    ).filter(
+                        pet_follower_table.c.follower_pid == requestor_pid
+                    ).filter(
+                        pet_follower_table.c.is_owner == False
+                    ).filter(
+                        pet_follower_table.c.pet_pid == subject[0]
+                    ).filter(
+                        pet_follower_table.c.is_accepted == False
+                    ).first() else 0,
                 ) for subject in db.session.query(
                     Pet.public_id, 
                     Pet.name,
-                    Pet.photo
-                    ).filter(post_subject_table.c.post_pid==post[0]
-                    ).filter(post_subject_table.c.subject_pid==Pet.public_id
-                    ).all()
+                    Pet.photo,
+                    Specie.public_id,
+                    Specie.name,
+                    Breed.public_id,
+                    Breed.name,
+                ).select_from(
+                    post_subject_table
+                ).filter(
+                    post_subject_table.c.post_pid==post[0]
+                ).outerjoin(
+                    Pet
+                ).outerjoin(
+                    Breed
+                ).outerjoin(
+                    Specie
+                ).order_by(Pet.registered_on.desc()).all()
             ],
             like_count = db.session.query(
                 func.count(post_liker_table.c.public_id)

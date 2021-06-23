@@ -45,7 +45,7 @@ class PostListByPet(Resource):
     @api.marshal_list_with(_post, envelope='data')
     def get(self, user_pid, subject_id):
         """List all registered posts"""
-        return get_all_posts_by_pet(user_pid, subject_id)
+        return get_all_posts_by_pet(user_pid, subject_id, request.args.get("w_media_only"))
 
 @api.route('/pinboard/<pinboard_id>')
 @api.param("pinboard_id", "The Business public identifier")
