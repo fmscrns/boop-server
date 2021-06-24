@@ -1,6 +1,5 @@
 import uuid
 import datetime
-
 from app.main import db
 from app.main.model.business import Business, business_type_table
 from app.main.model.business_operation import BusinessOperation

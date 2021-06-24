@@ -1,8 +1,4 @@
-from sqlalchemy.sql.expression import outerjoin
-from app.main.util.dto import PostDto
-from sqlalchemy.orm import session
 from sqlalchemy import or_
-from sqlalchemy.sql.functions import user
 from app.main.service import model_save_changes, table_save_changes
 import uuid
 import datetime

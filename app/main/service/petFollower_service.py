@@ -1,5 +1,3 @@
-import re
-from flask.globals import request
 from app.main.service import table_save_changes
 import uuid
 from app.main import db

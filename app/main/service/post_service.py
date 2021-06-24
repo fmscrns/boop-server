@@ -1,12 +1,8 @@
 from app.main.model.specie import Specie
 from app.main.model.breed import Breed
 from app.main.model.comment import Comment
-from operator import pos
 import uuid
 import datetime
-from sqlalchemy.sql.expression import outerjoin, select
-from dateutil import parser
-from sqlalchemy.sql.functions import user
 from app.main import db
 from app.main.model.post import Post
 from app.main.model.user import User, circle_member_table, pet_follower_table, post_liker_table
@@ -779,6 +775,8 @@ def get_all_posts(requestor_pid):
         ).select_from(
             Post
         ).outerjoin(
+            User
+        ).outerjoin(
             post_subject_table
         ).outerjoin(
             Pet
@@ -788,8 +786,6 @@ def get_all_posts(requestor_pid):
             pet_follower_table.c.is_accepted == True
         ).filter(
             pet_follower_table.c.follower_pid == requestor_pid
-        ).outerjoin(
-            User
         ).outerjoin(
             Business
         ).outerjoin(

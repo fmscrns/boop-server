@@ -1,6 +1,5 @@
 import uuid
 from sqlalchemy import func, or_
-
 from app.main import db
 from app.main.model.circle import Circle
 from app.main.model.user import User, circle_member_table

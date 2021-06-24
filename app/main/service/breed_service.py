@@ -1,7 +1,6 @@
 from app.main.service import model_save_changes
 import uuid
 import datetime
-
 from app.main import db
 from app.main.model.breed import Breed
 from app.main.model.specie import Specie

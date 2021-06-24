@@ -1,10 +1,8 @@
 from app.main.service import model_save_changes
 import uuid
 import datetime
-
 from app.main import db
 from app.main.model.circle_type import CircleType
-
 
 def save_new_circleType(data):
     circle_type = CircleType.query.filter_by(name=data['name']).first()

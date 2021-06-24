@@ -1,18 +1,11 @@
 from app.main.model.comment import Comment
-from operator import pos
 import uuid
 import datetime
-from sqlalchemy.sql.expression import outerjoin, select
-from dateutil import parser
-from sqlalchemy.sql.functions import user
 from app.main import db
 from app.main.model.post import Post
-from app.main.model.user import User, circle_member_table, pet_follower_table
-from app.main.model.pet import Pet
-from app.main.model.business import Business
+from app.main.model.user import User, circle_member_table
 from app.main.model.circle import Circle
-from app.main.model.pet import post_subject_table
-from . import model_save_changes, table_save_changes
+from . import model_save_changes
 from sqlalchemy import or_
 
 def save_new_comment(user_pid, data):

@@ -1,6 +1,5 @@
 import uuid
 from sqlalchemy import func
-
 from app.main import db
 from app.main.model.business import Business
 from app.main.model.user import User, business_follower_table

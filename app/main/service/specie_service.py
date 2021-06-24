@@ -1,10 +1,7 @@
 import uuid
 import datetime
-
 from app.main import db
 from app.main.model.specie import Specie
-from app.main.model.breed import Breed
-
 
 def save_new_specie(data):
     specie = Specie.query.filter_by(name=data['name']).first()

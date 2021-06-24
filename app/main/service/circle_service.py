@@ -1,7 +1,5 @@
 import uuid
 import datetime
-from sqlalchemy import func
-from sqlalchemy.sql.functions import user
 from app.main import db
 from app.main.model.circle import Circle, circle_type_table
 from app.main.model.circle_type import CircleType
