@@ -834,11 +834,21 @@ def get_a_post(requestor_pid, public_id):
         Circle.public_id,
         Circle.name,
         Circle.photo
+    ).select_from(
+        Post
     ).filter(
         Post.public_id == public_id
+    ).outerjoin(
+        User
     ).filter(
-        Post.user_creator_id == User.public_id
+        User.public_id == requestor_pid
+    ).outerjoin(
+        Business
+    ).outerjoin(
+        Circle
     ).first()
+
+    print(post)
 
     if post:
         return dict(
