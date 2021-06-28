@@ -14,7 +14,7 @@ from .main.controller.businessType_controller import api as businessType_ns
 from .main.controller.circleType_controller import api as circleType_ns
 from .main.controller.circle_controller import api as circle_ns
 from .main.controller.comment_controller import api as comment_ns
-
+from .main.controller.notification_controller import api as notification_ns
 
 blueprint = Blueprint('api', __name__)
 
@@ -35,4 +35,5 @@ api.add_namespace(businessType_ns, path='/business_type')
 api.add_namespace(circle_ns, path='/circle')
 api.add_namespace(circleType_ns, path='/circle_type')
 api.add_namespace(comment_ns, path='/comment')
+api.add_namespace(notification_ns, path="/notification")
 

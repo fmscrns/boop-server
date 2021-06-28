@@ -7,7 +7,7 @@ from flask_script import Manager
 
 from app.main import create_app, db
 
-from app.main.model import user, breed, specie, blacklist, pet, business, business_operation, business_type, post, circle, circle_type, comment
+from app.main.model import user, breed, specie, blacklist, pet, business, business_operation, business_type, post, circle, circle_type, comment, notification
 
 app = create_app(os.getenv('BOILERPLATE_ENV') or 'dev')
 app.register_blueprint(blueprint)

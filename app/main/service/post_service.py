@@ -1,3 +1,5 @@
+from app.main.model.notification import Notification
+from app.main.service import notification_service
 from app.main.model.specie import Specie
 from app.main.model.breed import Breed
 from app.main.model.comment import Comment
@@ -840,17 +842,22 @@ def get_a_post(requestor_pid, public_id):
         Post.public_id == public_id
     ).outerjoin(
         User
-    ).filter(
-        User.public_id == requestor_pid
     ).outerjoin(
         Business
     ).outerjoin(
         Circle
     ).first()
 
-    print(post)
-
     if post:
+        if post[7] == requestor_pid:
+            notification_list = Notification.query.filter_by(
+                post_subject_id=post[0],
+                user_recipient_id=requestor_pid
+            ).all()
+            for notif in notification_list:
+                notif.is_read = True
+            db.session.commit()
+
         return dict(
             public_id = post[0],
             content = post[1],
@@ -993,6 +1000,15 @@ def like_a_post(requestor_pid, post_pid):
                 post_pid=post_pid,
                 liker_pid=requestor_pid
             )
+
+            notification_service.save_new_notification(
+              "{} liked your post.".format(User.query.filter_by(public_id=requestor_pid).first().name),
+              0,
+              requestor_pid,
+              post.user_creator_id,
+              post_subject_id = post.public_id
+            )
+
             table_save_changes(statement)
             response_object = {
                 'status': 'success',

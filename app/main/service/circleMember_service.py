@@ -3,7 +3,7 @@ from sqlalchemy import func, or_
 from app.main import db
 from app.main.model.circle import Circle
 from app.main.model.user import User, circle_member_table
-from app.main.service import circle_service, table_save_changes
+from app.main.service import circle_service, notification_service, table_save_changes
 
 def create_circle_member(user_pid, public_id):
     circle = Circle.query.filter_by(public_id=public_id).first()
@@ -15,6 +15,15 @@ def create_circle_member(user_pid, public_id):
         ).filter(
             circle_member_table.c.member_pid == user_pid
         ).first()
+
+        admin_list = db.session.query(
+            circle_member_table.c.member_pid
+        ).filter(
+            circle_member_table.c.circle_pid == public_id
+        ).filter(
+            circle_member_table.c.is_admin == True
+        ).all()
+
         if not member:
             statement = circle_member_table.insert().values(
                 public_id=str(uuid.uuid4()),
@@ -22,6 +31,19 @@ def create_circle_member(user_pid, public_id):
                 member_pid=user_pid
             )
             table_save_changes(statement)
+
+            for admin in admin_list:
+                notification_service.save_new_notification(
+                    "{} has requested to follow {}.".format(
+                        User.query.filter_by(public_id=user_pid).first().name,
+                        circle.name
+                    ),
+                    1,
+                    user_pid,
+                    admin[0],
+                    circle_subject_id = circle.public_id
+                )
+
             response_object = {
                 'status': 'success',
                 'message': 'Wait to be accepted by the admin.'
@@ -145,6 +167,15 @@ def accept_circle_member(user_pid, public_id, member_id):
                 is_accepted = True
             )
             table_save_changes(statement)
+
+            notification_service.save_new_notification(
+                "You are now a member of {}.".format(circle.name),
+                0,
+                user_pid,
+                member_id,
+                circle_subject_id = circle.public_id
+            )
+
             response_object = {
                 'status': 'success',
                 'message': 'Circle member successfully accepted.'

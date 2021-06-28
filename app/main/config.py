@@ -17,10 +17,11 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = postgres_local_base
     DEBUG = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
+    MAIN_DOMAIN = "http://127.0.0.1:8080"
 
 class ProductionConfig(Config):
     DEBUG = False
+    MAIN_DOMAIN = "https://boop-proj-client.herokuapp.com"
     # uncomment the line below to use postgres
     # SQLALCHEMY_DATABASE_URI = postgres_remote_base
 

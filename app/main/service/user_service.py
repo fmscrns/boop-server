@@ -1,3 +1,4 @@
+from app.main.model.notification import Notification
 import uuid
 import datetime
 from sqlalchemy import or_, func
@@ -82,7 +83,30 @@ def get_by_email(email):
     return User.query.filter_by(email=email).first() 
 
 def get_by_username(username):
-    return User.query.filter_by(username=username).first() 
+    user = db.session.query(
+        User.public_id,
+        User.name,
+        User.username,
+        User.photo
+    ).filter(
+        User.username == username
+    ).filter(
+        User.admin != True
+    ).first()
+    if user:
+        return dict(
+            public_id = user[0],
+            name = user[1],
+            username = user[2],
+            photo = user[3],
+            pet_count = db.session.query(
+                func.count(pet_follower_table.c.public_id)
+            ).filter(
+                pet_follower_table.c.follower_pid == user[0]
+            ).filter(
+                pet_follower_table.c.is_owner == True
+            ).scalar()
+        )
 
 def get_by_token(auth_token):
     decoded_resp = User.decode_auth_token(auth_token)

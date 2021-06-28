@@ -1,4 +1,4 @@
-from app.main.service import table_save_changes
+from app.main.service import notification_service, table_save_changes
 import uuid
 from app.main import db
 from app.main.model.pet import Pet
@@ -19,6 +19,14 @@ def create_pet_follower(user_pid, pet_pid):
             pet_follower_table.c.pet_pid == pet_pid
         ).first()
 
+        owner_list = db.session.query(
+            pet_follower_table.c.follower_pid
+        ).filter(
+            pet_follower_table.c.pet_pid == pet_pid
+        ).filter(
+            pet_follower_table.c.is_owner == True
+        ).all()
+
         if not follower:
             statement = pet_follower_table.insert().values(
                 public_id=str(uuid.uuid4()),
@@ -27,6 +35,20 @@ def create_pet_follower(user_pid, pet_pid):
                 is_accepted=(True if pet.is_private == 0 else False)
             )
             table_save_changes(statement)
+
+            for owner in owner_list:
+                notification_service.save_new_notification(
+                    "{} {} {}.".format(
+                        User.query.filter_by(public_id=user_pid).first().name,
+                        "followed" if pet.is_private == 0 else "has requested to follow",
+                        pet.name
+                    ),
+                    pet.is_private,
+                    user_pid,
+                    owner[0],
+                    pet_subject_id = pet.public_id
+                )
+
             response_object = {
                 'status': 'success',
                 'message': 'Pet successfully followed.' if pet.is_private == 0 else "Awaiting owner's approval."
@@ -300,6 +322,15 @@ def accept_pet_follower(user_pid, pet_pid, follower_pid):
                 is_accepted = True
             )
             table_save_changes(statement)
+
+            notification_service.save_new_notification(
+                "You are now a follower of {}.".format(pet.name),
+                0,
+                user_pid,
+                follower_pid,
+                pet_subject_id = pet.public_id
+            )
+
             response_object = {
                 'status': 'success',
                 'message': 'Pet follower successfully accepted.'

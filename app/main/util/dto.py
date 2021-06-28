@@ -52,7 +52,7 @@ class PetDto:
         "is_private": fields.Integer(required=True, description="pet privacy", min=-1, max=1),
         "photo": fields.String(description="pet profile photo filename"),
         "registered_on": fields.DateTime(dt_format="rfc822", required=False, description="creation date"),
-        "group_id": fields.String(required=True, description="specie  identifier"),
+        "group_id": fields.String(required=True, description="specie identifier"),
         "group_name": fields.String(description="specie name"),
         "subgroup_id": fields.String(required=True, description="breed identifier"),
         "subgroup_name": fields.String(description="breed name"),
@@ -195,4 +195,21 @@ class CircleTypeDto:
     circle_type = api.model('circle_type', {
         'name': fields.String(required=True, description='circle type name', min_length=2),
         'public_id': fields.String(description='circle type Identifier')
+    })
+
+class NotificationDto:
+    api = Namespace("notification", description="notification related operations")
+    notification = api.model("notification", {
+        "public_id": fields.String(description='notification identifier'),
+        "content": fields.String(description="notification content", min_length=1),
+        "_type": fields.Integer(description="notification type", min=-1, max=1),
+        "is_read": fields.Boolean(description="notification read"),
+        "registered_on": fields.DateTime(dt_format="rfc822", required=False, description="creation date"),
+        "sender_photo": fields.String(description="notification photo filename"),
+        "recipient_id": fields.String(description="user recipient identifier"),
+        "pet_subject_id": fields.String(description="pet identifier"),
+        "post_subject_id": fields.String(description="post identifier"),
+        "circle_subject_id": fields.String(description="circle identifier"),
+        "business_subject_id": fields.String(description="business identifier"),
+        "notif_unread_count": fields.String(description="notification unread count")
     })

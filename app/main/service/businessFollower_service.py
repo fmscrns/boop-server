@@ -3,7 +3,7 @@ from sqlalchemy import func
 from app.main import db
 from app.main.model.business import Business
 from app.main.model.user import User, business_follower_table
-from app.main.service import table_save_changes
+from app.main.service import notification_service, table_save_changes
 from app.main.service import business_service
 
 def create_business_follower(requestor_pid, business_pid):
@@ -16,6 +16,15 @@ def create_business_follower(requestor_pid, business_pid):
         ).filter(
             business_follower_table.c.follower_pid == requestor_pid
         ).first()
+
+        exec_list = db.session.query(
+            business_follower_table.c.follower_pid
+        ).filter(
+            business_follower_table.c.business_pid == business_pid
+        ).filter(
+            business_follower_table.c.is_executive == True
+        ).all()
+
         if not follower:
             statement = business_follower_table.insert().values(
                 public_id=str(uuid.uuid4()),
@@ -23,6 +32,20 @@ def create_business_follower(requestor_pid, business_pid):
                 follower_pid=requestor_pid
             )
             table_save_changes(statement)
+
+            for exec in exec_list:
+                print(exec[0])
+                notification_service.save_new_notification(
+                    "{} followed {}".format(
+                        User.query.filter_by(public_id=requestor_pid).first().name,
+                        business.name
+                    ),
+                    0,
+                    requestor_pid,
+                    exec[0],
+                    business_subject_id = business.public_id
+                )
+            
             response_object = {
                 'status': 'success',
                 'message': 'Business successfully followed.'
