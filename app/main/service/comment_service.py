@@ -23,13 +23,14 @@ def save_new_comment(user_pid, data):
         )     
         model_save_changes(new_comment)
 
-        notification_service.save_new_notification(
-            "{} commented on your post.".format(User.query.filter_by(public_id=user_pid).first().name),
-            0,
-            user_pid,
-            post.user_creator_id,
-            post_subject_id = post.public_id
-        )
+        if post.user_creator_id != user_pid:
+            notification_service.save_new_notification(
+                "{} commented on your post.".format(User.query.filter_by(public_id=user_pid).first().name),
+                0,
+                user_pid,
+                post.user_creator_id,
+                post_subject_id = post.public_id
+            )
 
         response_object = {
             'status': 'success',

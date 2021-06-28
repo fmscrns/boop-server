@@ -1,3 +1,4 @@
+from app.main.model.notification import Notification
 import uuid
 import datetime
 from app.main import db
@@ -189,6 +190,13 @@ def get_a_circle(user_pid, public_id):
     ).first()
 
     if circle:
+        notification_list = Notification.query.filter_by(
+            circle_subject_id=public_id,
+            user_recipient_id=user_pid
+        ).all()
+        for notif in notification_list:
+            notif.is_read = True
+        db.session.commit()
         return dict(
             public_id = circle[0],
             name = circle[1],

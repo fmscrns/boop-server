@@ -1,3 +1,4 @@
+from app.main.model.notification import Notification
 import uuid
 from sqlalchemy import func, or_
 from app.main import db
@@ -34,7 +35,7 @@ def create_circle_member(user_pid, public_id):
 
             for admin in admin_list:
                 notification_service.save_new_notification(
-                    "{} has requested to follow {}.".format(
+                    "{} has requested to join {}.".format(
                         User.query.filter_by(public_id=user_pid).first().name,
                         circle.name
                     ),
@@ -207,6 +208,14 @@ def get_all_circle_members(requestor_pid, public_id, type, search_value):
     ).first()
     if circle:
         if (requesting_admin is not None and type == "0") or (type == "1"):
+            if type == "0":
+                notification_list = Notification.query.filter_by(
+                    circle_subject_id=public_id,
+                    user_recipient_id=requestor_pid
+                ).all()
+                for notif in notification_list:
+                    notif.is_read = True
+                db.session.commit()
             return db.session.query(
                 User
             ).filter(

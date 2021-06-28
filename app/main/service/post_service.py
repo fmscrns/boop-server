@@ -1001,13 +1001,14 @@ def like_a_post(requestor_pid, post_pid):
                 liker_pid=requestor_pid
             )
 
-            notification_service.save_new_notification(
-              "{} liked your post.".format(User.query.filter_by(public_id=requestor_pid).first().name),
-              0,
-              requestor_pid,
-              post.user_creator_id,
-              post_subject_id = post.public_id
-            )
+            if requestor_pid != post.user_creator_id:
+                notification_service.save_new_notification(
+                "{} liked your post.".format(User.query.filter_by(public_id=requestor_pid).first().name),
+                0,
+                requestor_pid,
+                post.user_creator_id,
+                post_subject_id = post.public_id
+                )
 
             table_save_changes(statement)
             response_object = {

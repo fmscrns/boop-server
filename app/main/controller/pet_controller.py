@@ -71,7 +71,7 @@ class PetFollowerList(Resource):
     @api.marshal_list_with(_user, envelope='data')
     def get(self, user_pid, public_id):
         """List all registered pet followers"""
-        return get_all_pet_followers(public_id, request.args.get("type"))
+        return get_all_pet_followers(user_pid, public_id, request.args.get("type"))
 
     @token_required
     @api.response(201, 'Pet successfully followed.')

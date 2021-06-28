@@ -1,3 +1,4 @@
+from app.main.model.notification import Notification
 from sqlalchemy import or_
 from app.main.service import model_save_changes, table_save_changes
 import uuid
@@ -168,6 +169,13 @@ def get_a_pet(requestor_pid, public_id):
     ).first()
 
     if pet:
+        notification_list = Notification.query.filter_by(
+            pet_subject_id=public_id,
+            user_recipient_id=requestor_pid
+        ).all()
+        for notif in notification_list:
+            notif.is_read = True
+        db.session.commit()
         return dict(
             public_id = pet[0],
             name = pet[1],

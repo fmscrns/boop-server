@@ -1,3 +1,4 @@
+from app.main.model.notification import Notification
 from app.main.service import notification_service, table_save_changes
 import uuid
 from app.main import db
@@ -67,21 +68,44 @@ def create_pet_follower(user_pid, pet_pid):
         }
         return response_object, 404
 
-def get_all_pet_followers(pet_pid, type):
+def get_all_pet_followers(requestor_pid, pet_pid, type):
     pet = Pet.query.filter_by(public_id=pet_pid).first()
+    requesting_owner = db.session.query(
+        pet_follower_table
+    ).filter(
+        pet_follower_table.c.follower_pid == requestor_pid
+    ).filter(
+        pet_follower_table.c.pet_pid == pet_pid
+    ).filter(
+        pet_follower_table.c.is_owner == True
+    ).first()
     if pet:
-        return db.session.query(
-            User
-        ).filter(
-            pet_follower_table.c.pet_pid == pet_pid
-        ).filter(
-            pet_follower_table.c.follower_pid == User.public_id
-        ).filter(
-            pet_follower_table.c.is_accepted == (False if type == "0" else True)
-        ).filter(
-            pet_follower_table.c.is_owner == False
-        ).all()
-
+        if (requesting_owner is not None and type == "0") or (type == "1"):
+            if type == "0":
+                notification_list = Notification.query.filter_by(
+                    pet_subject_id=pet_pid,
+                    user_recipient_id=requestor_pid
+                ).all()
+                for notif in notification_list:
+                    notif.is_read = True
+                db.session.commit()
+            return db.session.query(
+                User
+            ).filter(
+                pet_follower_table.c.pet_pid == pet_pid
+            ).filter(
+                pet_follower_table.c.follower_pid == User.public_id
+            ).filter(
+                pet_follower_table.c.is_accepted == (False if type == "0" else True)
+            ).filter(
+                pet_follower_table.c.is_owner == False
+            ).all()
+        else:
+            response_object = {
+                'status': 'fail',
+                'message': 'Forbidden.'
+            }
+            return response_object, 403
     else:
         response_object = {
             'status': 'fail',

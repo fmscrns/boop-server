@@ -1,3 +1,4 @@
+from app.main.model.notification import Notification
 import uuid
 import datetime
 from app.main import db
@@ -248,6 +249,14 @@ def get_a_business(requestor_pid, public_id):
         )
 
         if executive:
+            notification_list = Notification.query.filter_by(
+                business_subject_id=business[0],
+                user_recipient_id=requestor_pid
+            ).all()
+            for notif in notification_list:
+                notif.is_read = True
+            db.session.commit()
+
             business_list["executive"] = [
                 dict(
                     executive_id = executive[0],
