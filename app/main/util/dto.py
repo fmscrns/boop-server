@@ -128,6 +128,7 @@ class PostDto:
                 "visitor_auth": fields.Integer(description="visiting user authorization")
             })
         ), description="post subject", required=True),
+        "is_mine": fields.Integer(description="visiting user ownership", min=0, max=1),
         "like_count": fields.Integer(description="post like count"),
         "comment_count": fields.Integer(description="post comment count"),
         "is_liked": fields.Integer(description="visiting user like", min=0, max=1)

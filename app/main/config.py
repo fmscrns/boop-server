@@ -18,10 +18,12 @@ class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAIN_DOMAIN = "http://127.0.0.1:8080"
+    PER_PAGE_PAGINATION = 2
 
 class ProductionConfig(Config):
     DEBUG = False
     MAIN_DOMAIN = "https://boop-proj-client.herokuapp.com"
+    PER_PAGE_PAGINATION = 5
     # uncomment the line below to use postgres
     # SQLALCHEMY_DATABASE_URI = postgres_remote_base
 

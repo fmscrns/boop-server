@@ -1,6 +1,6 @@
 from flask import request
 from flask_restx import Resource
-
+import time
 from ..util.dto import CommentDto
 from ..util.decorator import *
 from ..service.comment_service import save_new_comment, get_all_comments_by_user, delete_a_comment, get_all_comments_by_post
@@ -37,7 +37,8 @@ class CommentListByPost(Resource):
     @api.marshal_list_with(_comment, envelope='data')
     def get(self, user_pid, parent_id):
         """List all registered comments"""
-        return get_all_comments_by_post(user_pid, parent_id)
+        time.sleep(1)
+        return get_all_comments_by_post(user_pid, parent_id, request.args.get("pagination_no", type=int))
 
 @api.route('/<public_id>')
 @api.param('public_id', 'The Comment identifier')

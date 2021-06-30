@@ -20,6 +20,7 @@ class Post(db.Model):
     post_subject_rel = db.relationship('Pet', secondary=post_subject_table, cascade="save-update", lazy="joined")
     post_liker_rel = db.relationship('User', secondary=post_liker_table, cascade="save-update", lazy="joined")
     comment_parent_rel = db.relationship("Comment", cascade="all,delete", lazy="joined")
+    notification_subject_rel = db.relationship("Notification", cascade="all,delete", lazy="joined")
 
     def __repr__(self):
         return "<Post '{}'>".format(self.public_id)
