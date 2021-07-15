@@ -16,7 +16,7 @@ class SpecieList(Resource):
     @api.marshal_list_with(_specie, envelope='data')
     def get(self, user_pid):
         """List all registered species"""
-        return get_all_species()
+        return get_all_species(user_pid)
 
     @admin_token_required
     @api.response(201, 'Specie successfully created.')

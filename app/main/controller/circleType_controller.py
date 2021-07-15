@@ -15,7 +15,7 @@ class CircleTypeList(Resource):
     @api.marshal_list_with(_circleType, envelope='data')
     def get(self, user_pid):
         """List all registered circle types"""
-        return get_all_circleTypes()
+        return get_all_circleTypes(user_pid)
 
     @admin_token_required
     @api.response(201, 'Circle type successfully created.')

@@ -1,3 +1,6 @@
+from sqlalchemy.sql.expression import outerjoin
+from sqlalchemy.sql.functions import func
+from app.main.model.preference import Preference
 from app.main.service import model_save_changes
 import uuid
 import datetime
@@ -61,8 +64,25 @@ def delete_a_businessType(public_id, data):
         }
         return response_object, 404
 
-def get_all_businessTypes():
-    return BusinessType.query.all()
+def get_all_businessTypes(requestor_pid):
+    return [
+        dict(
+            public_id = _type[0],
+            name = _type[1],
+            is_preferred = _type[2]
+        ) for _type in db.session.query(
+            BusinessType.public_id,
+            BusinessType.name,
+            func.count(Preference.user_selector_id).filter(Preference.user_selector_id==requestor_pid).filter(Preference.is_followed==True)
+        ).select_from(
+            BusinessType
+        ).outerjoin(
+            Preference
+        ).group_by(
+            BusinessType.public_id,
+            BusinessType.name
+        ).all()
+    ]
 
 def get_a_businessType(public_id):
     return BusinessType.query.filter_by(public_id=public_id).first()

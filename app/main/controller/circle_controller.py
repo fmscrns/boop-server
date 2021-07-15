@@ -1,9 +1,10 @@
+import time
 from flask import request
 from flask_restx import Resource
 
 from ..util.dto import CircleDto, UserDto
 from ..util.decorator import *
-from ..service.circle_service import save_new_circle, get_all_circles_by_user, get_a_circle, patch_a_circle, delete_a_circle
+from ..service.circle_service import save_new_circle, get_all_circles_by_user, get_a_circle, patch_a_circle, delete_a_circle, get_all_circles_by_preference
 from ..service.circleMember_service import create_circle_member, delete_circle_member, get_all_circle_members, accept_circle_member, create_circle_admin, delete_circle_admin
 
 api = CircleDto.api
@@ -12,13 +13,6 @@ _user = UserDto.user
 
 @api.route('/')
 class CircleList(Resource):
-    # @admin_token_required
-    # @api.doc('list_of_registered_circles')
-    # @api.marshal_list_with(_circle, envelope='data')
-    # def get(self):
-    #     """List all registered circles"""
-    #     return get_all_circles()
-
     @token_required
     @api.response(201, 'Circle successfully created.')
     @api.doc('create a new circle')
@@ -42,6 +36,16 @@ class CircleListByUser(Resource):
     def get(self, user_pid, creator_id):
         """List all registered circles"""
         return get_all_circles_by_user(user_pid, creator_id)
+
+@api.route('/preference')
+class CircleListByPreference(Resource):
+    @token_required
+    @api.doc('list_of_registered_circles')
+    @api.marshal_list_with(_circle, envelope='data')
+    def get(self, user_pid):
+        """List all registered circles"""
+        time.sleep(1)
+        return get_all_circles_by_preference(user_pid, request.args.get("pagination_no", type=int))
 
 @api.route('/<public_id>')
 @api.param('public_id', 'The Circle identifier')

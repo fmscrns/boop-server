@@ -1,3 +1,6 @@
+from sqlalchemy.sql.expression import outerjoin
+from app.main.model.preference import Preference
+from sqlalchemy.sql.functions import func
 from app.main.service import model_save_changes
 import uuid
 import datetime
@@ -89,22 +92,63 @@ def delete_a_breed(public_id, data):
         }
         return response_object, 404
 
-def get_all_breeds():
-    return [
-        dict(
-            public_id = breed[0],
-            name = breed[1],
-            parent_id = breed[2],
-            parent_name = breed[3]
-        ) for breed in db.session.query(
-            Breed.public_id,
-            Breed.name,
-            Specie.public_id,
-            Specie.name
-        ).filter(
-            Breed.specie_parent_id == Specie.public_id
-        ).all()
-    ]
+def get_all_breeds(requestor_pid, preferred_only):
+    if preferred_only == 1:
+        return [
+            dict(
+                public_id = breed[0],
+                name = breed[1],
+                parent_id = breed[2],
+                parent_name = breed[3],
+                is_preferred = breed[4]
+            ) for breed in db.session.query(
+                Breed.public_id,
+                Breed.name,
+                Specie.public_id,
+                Specie.name,
+                func.count(Preference.user_selector_id).filter(Preference.user_selector_id==requestor_pid).filter(Preference.is_followed==True)
+            ).select_from(
+                Breed
+            ).outerjoin(
+                Specie
+            ).outerjoin(
+                Preference
+            ).filter(
+                Preference.user_selector_id == requestor_pid
+            ).group_by(
+                Breed.public_id,
+                Breed.name,
+                Specie.public_id,
+                Specie.name
+            ).all()
+        ]
+    else:
+        return [
+            dict(
+                public_id = breed[0],
+                name = breed[1],
+                parent_id = breed[2],
+                parent_name = breed[3],
+                is_preferred = breed[4]
+            ) for breed in db.session.query(
+                Breed.public_id,
+                Breed.name,
+                Specie.public_id,
+                Specie.name,
+                func.count(Preference.user_selector_id).filter(Preference.user_selector_id==requestor_pid).filter(Preference.is_followed==True)
+            ).select_from(
+                Breed
+            ).outerjoin(
+                Specie
+            ).outerjoin(
+                Preference
+            ).group_by(
+                Breed.public_id,
+                Breed.name,
+                Specie.public_id,
+                Specie.name
+            ).all()
+        ]
 
 def get_a_breed(public_id):
     breed = db.session.query(
@@ -126,22 +170,33 @@ def get_a_breed(public_id):
         'message': 'No breed found.'
     }, 404
 
-def get_all_by_specie(specie_id):
+def get_all_by_specie(requestor_pid, specie_id):
     breeds = [
         dict(
             public_id = breed[0],
             name = breed[1],
             parent_id = breed[2],
-            parent_name = breed[3]
+            parent_name = breed[3],
+            is_preferred = breed[4]
         ) for breed in db.session.query(
             Breed.public_id,
             Breed.name,
             Specie.public_id,
-            Specie.name
-        ).filter(
-            Breed.specie_parent_id == Specie.public_id
+            Specie.name,
+            func.count(Preference.user_selector_id).filter(Preference.user_selector_id==requestor_pid)
+        ).select_from(
+            Breed
+        ).outerjoin(
+            Specie
         ).filter(
             Specie.public_id == specie_id
+        ).outerjoin(
+            Preference
+        ).group_by(
+            Breed.public_id,
+            Breed.name,
+            Specie.public_id,
+            Specie.name
         ).all()
     ]
     if breeds:

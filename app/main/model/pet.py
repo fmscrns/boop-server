@@ -31,6 +31,7 @@ class Pet(db.Model):
     breed_subgroup_id = db.Column(db.String, db.ForeignKey("breed.public_id"), nullable=False)
     user_follower_rel = db.relationship('User', secondary=pet_follower_table, cascade="save-update", lazy="joined")
     post_subject_rel = db.relationship('Post', secondary=post_subject_table, cascade="save-update", lazy="joined")
+    notification_subject_rel = db.relationship("Notification", cascade="all,delete", lazy="joined")
 
     def __repr__(self):
         return "<Pet '{}'>".format(self.name)

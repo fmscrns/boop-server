@@ -1,12 +1,13 @@
 from flask import request
 from flask_restx import Resource
-
+import time
 from ..util.dto import UserDto
 from ..util.decorator import *
-from ..service.user_service import save_new_user, get_all_users, get_a_user, get_by_email, get_by_username, patch_a_user, get_by_token, get_all_by_search
+from ..service.user_service import save_new_user, get_a_user, get_by_email, get_by_username, patch_a_user, get_by_token, get_all_by_search
 
 api = UserDto.api
 _user = UserDto.user
+_userPatch = UserDto.user_patch
 
 
 @api.route('/')
@@ -16,7 +17,14 @@ class UserList(Resource):
     @api.marshal_list_with(_user, envelope='data')
     def get(self, user_pid):
         """List registered users"""
-        return get_all_by_search(request.args.get("search"))
+        time.sleep(1)
+        return get_all_by_search(
+            user_pid,
+            request.args.get("search"),
+            request.args.get("same_followed_pets", type=int),
+            request.args.get("same_breed_preferences", type=int),
+            request.args.get("pagination_no", type=int)
+        )
 
     @api.response(201, 'User successfully created.')
     @api.doc('create a new user')
@@ -50,19 +58,21 @@ class User(Resource):
         else:
             return user
 
+    @token_required
     @api.response(201, 'User successfully updated.')
     @api.doc('patch a user')
-    @api.expect(_user, validate=True)
-    def patch(self, public_id):
+    @api.expect(_userPatch, validate=True)
+    def patch(self, user_pid, public_id):
         """patch a user given its identifier"""
-        auth_header = request.headers.get('Authorization')
-        if auth_header:
-            patch_user = patch_a_user(public_id, auth_header.split(" ")[1], request.json)
+        return patch_a_user(user_pid, public_id, request.json)
 
-            if isinstance(patch_user, str):
-                api.abort(401, message=patch_user)
-            else:
-                return patch_user
+    @token_required
+    @api.response(201, 'User successfully updated.')
+    @api.doc('patch a user')
+    @api.expect(_userPatch, validate=True)
+    def post(self, user_pid, public_id):
+        """patch a user given its identifier"""
+        return patch_a_user(user_pid, public_id, request.json, change_credentials=True)
 
 @api.route('/email/<email>')
 @api.param('email', 'The User identifier')

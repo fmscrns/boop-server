@@ -16,11 +16,20 @@ class UserDto:
         "pet_count": fields.Integer(description="user pet count")
     })
 
+    user_patch = api.model('user_patch', {
+        'name': fields.String(description='user name'),
+        "photo": fields.String(description="user profile photo"),
+        'email': fields.String(description='user email address'),
+        'username': fields.String(description='user username'),
+        'password': fields.String(description='user password')
+    })
+
 class SpecieDto:
     api = Namespace('specie', description='specie related operations')
     specie = api.model('specie', {
         'name': fields.String(required=True, description='specie name', min_length=2),
-        'public_id': fields.String(description='specie Identifier')
+        'public_id': fields.String(description='specie Identifier'),
+        "is_preferred": fields.Integer(description="visiting user preference", min=0, max=1)
     })
 
 class BreedDto:
@@ -30,6 +39,7 @@ class BreedDto:
         'public_id': fields.String(description='breed Identifier'),
         'parent_name': fields.String(description='specie parent name'),
         'parent_id': fields.String(required=True, description='specie parent Identifier'),
+        "is_preferred": fields.Integer(description="visiting user preference", min=0, max=1)
     })
 
 class AuthDto:
@@ -65,7 +75,7 @@ class PetDto:
             })
         ), description="pet owner"),
         "visitor_auth": fields.Integer(description="visiting user authorization"),
-        
+        "follower_count": fields.Integer(description="follower count", min=0)
     })
 
 class BusinessDto:
@@ -91,7 +101,8 @@ class BusinessDto:
                 "photo": fields.String(description="user profile photo filename", attribute="executive_photo"),
             })
         ), description="pet owner"),
-        "visitor_auth": fields.Integer(description="visiting user authorization")
+        "visitor_auth": fields.Integer(description="visiting user authorization"),
+        "follower_count": fields.Integer(description="follower count", min=0)
     })
 
 class PostDto:
@@ -153,14 +164,16 @@ class CommentDto:
         "creator_photo": fields.String(description="user profile photo filename"),
         "parent_id": fields.String(description="post identifier"),
         "parent_name": fields.String(description="post name"),
-        "parent_photo": fields.String(description="post photo")
+        "parent_photo": fields.String(description="post photo"),
+        "is_mine": fields.Integer(description="visiting user ownership", min=0, max=1)
     })
 
 class BusinessTypeDto:
     api = Namespace('business_type', description='business type related operations')
     business_type = api.model('business_type', {
         'name': fields.String(required=True, description='business type name', min_length=2),
-        'public_id': fields.String(description='business type Identifier')
+        'public_id': fields.String(description='business type Identifier'),
+        "is_preferred": fields.Integer(description="visiting user preference", min=0, max=1)
     })
 
 
@@ -188,6 +201,7 @@ class CircleDto:
             })
         ), description="circle admin"),
         "visitor_auth": fields.Integer(description="visiting user authorization"),
+        "member_count": fields.Integer(description="member count", min=0)
     })
 
 
@@ -195,7 +209,8 @@ class CircleTypeDto:
     api = Namespace('circle_type', description='circle type related operations')
     circle_type = api.model('circle_type', {
         'name': fields.String(required=True, description='circle type name', min_length=2),
-        'public_id': fields.String(description='circle type Identifier')
+        'public_id': fields.String(description='circle type Identifier'),
+        "is_preferred": fields.Integer(description="visiting user preference", min=0, max=1)
     })
 
 class NotificationDto:
@@ -213,4 +228,36 @@ class NotificationDto:
         "circle_subject_id": fields.String(description="circle identifier"),
         "business_subject_id": fields.String(description="business identifier"),
         "notif_unread_count": fields.String(description="notification unread count")
+    })
+
+class PreferenceDto:
+    api = Namespace("preference", description="preference related operations")
+    preference = api.model("preference", {
+        "public_id": fields.String(description="preference identifier"),
+        "user_selector_id": fields.String(description="user identifier"),
+        "is_followed": fields.Boolean(description="preference follow boolean"),
+        "specie_group": fields.List(fields.Nested(
+            api.model("specie_group", {
+                "public_id": fields.String(required=True, description="specie identifier"),
+                "name": fields.String(description="specie name"),
+            })
+        ), description="specie group"),
+        "breed_subgroup": fields.List(fields.Nested(
+            api.model("breed_subgroup", {
+                "public_id": fields.String(required=True, description="breed identifier"),
+                "name": fields.String(description="breed name"),
+            })
+        ), required=True, description="breed subgroup"),
+        "business_type": fields.List(fields.Nested(
+            api.model("business_type", {
+                "public_id": fields.String(required=True, description="business type identifier"),
+                "name": fields.String(description="business type name"),
+            })
+        ), required=True, description="business type"),
+        "circle_type": fields.List(fields.Nested(
+            api.model("circle_type", {
+                "public_id": fields.String(required=True, description="circle type identifier"),
+                "name": fields.String(description="circle type name"),
+            })
+        ), required=True, description="circle type")
     })

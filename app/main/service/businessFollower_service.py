@@ -34,7 +34,6 @@ def create_business_follower(requestor_pid, business_pid):
             table_save_changes(statement)
 
             for exec in exec_list:
-                print(exec[0])
                 notification_service.save_new_notification(
                     "{} followed {}".format(
                         User.query.filter_by(public_id=requestor_pid).first().name,
@@ -192,6 +191,18 @@ def create_business_executive(requestor_pid, business_pid, data):
                         is_executive = True,
                     )
                     table_save_changes(statement)
+
+                    notification_service.save_new_notification(
+                        "{} has made you an executive of {}.".format(
+                            User.query.filter_by(public_id=requestor_pid).first().name,
+                            business.name
+                        ),
+                        0,
+                        requestor_pid,
+                        data.get("public_id"),
+                        business_subject_id = business_pid
+                    )
+
                     response_object = {
                         'status': 'success',
                         'message': 'Business successfully have new executive.'
@@ -211,6 +222,16 @@ def create_business_executive(requestor_pid, business_pid, data):
                     is_executive=True
                 )
                 table_save_changes(statement)
+                notification_service.save_new_notification(
+                    "{} has made you an executive of {}.".format(
+                        User.query.filter_by(public_id=requestor_pid).first().name,
+                        business.name
+                    ),
+                    0,
+                    requestor_pid,
+                    data.get("public_id"),
+                    business_subject_id = business_pid
+                )
                 response_object = {
                     'status': 'success',
                     'message': 'Business successfully have new executive.'
@@ -269,6 +290,18 @@ def delete_business_executive(requestor_pid, business_pid, executive_pid, data):
                     is_executive = False
                 )
                 table_save_changes(statement)
+
+                notification_service.save_new_notification(
+                    "{} has removed you as executive of {}.".format(
+                        User.query.filter_by(public_id=requestor_pid).first().name,
+                        business.name
+                    ),
+                    0,
+                    requestor_pid,
+                    executive_pid,
+                    business_subject_id = business_pid
+                )
+
                 response_object = {
                     'status': 'success',
                     'message': 'Business executive successfully removed.'

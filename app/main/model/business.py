@@ -24,6 +24,7 @@ class Business(db.Model):
     prop_operation_rel = db.relationship('BusinessOperation', cascade="all,delete", lazy="joined")
     user_follower_rel = db.relationship('User', secondary=business_follower_table, cascade="save-update", lazy="joined")
     post_confiner_rel = db.relationship('Post', cascade="save-update", lazy="joined")
+    notification_subject_rel = db.relationship("Notification", cascade="all,delete", lazy="joined")
     
     def __repr__(self):
         return "<Business '{}'>".format(self.name)

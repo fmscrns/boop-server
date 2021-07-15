@@ -1,3 +1,8 @@
+from app.main.service import user_service
+from sqlalchemy.sql.expression import outerjoin
+from app.main.model.breed import Breed
+from sqlalchemy.sql.functions import func
+from app.main.model.preference import Preference
 import uuid
 import datetime
 from app.main import db
@@ -59,8 +64,27 @@ def delete_a_specie(public_id, data):
         }
         return response_object, 404
 
-def get_all_species():
-    return Specie.query.all()
+def get_all_species(requestor_pid):
+    return [
+        dict(
+            public_id = specie[0],
+            name = specie[1],
+            is_preferred = specie[2]
+        ) for specie in db.session.query(
+            Specie.public_id,
+            Specie.name,
+            func.count(Preference.user_selector_id).filter(Preference.user_selector_id==requestor_pid).filter(Preference.is_followed==True)
+        ).select_from(
+            Specie
+        ).outerjoin(
+            Breed
+        ).outerjoin(
+            Preference
+        ).group_by(
+            Specie.public_id,
+            Specie.name
+        ).all()
+    ]
 
 def get_a_specie(public_id):
     return Specie.query.filter_by(public_id=public_id).first()

@@ -16,7 +16,7 @@ class BreedList(Resource):
     @api.marshal_list_with(_breed, envelope='data')
     def get(self, user_pid):
         """List all registered breeds"""
-        return get_all_breeds()
+        return get_all_breeds(user_pid, request.args.get("preferred_only", type=int))
 
     @admin_token_required
     @api.response(201, 'Breed successfully created.')
@@ -35,7 +35,7 @@ class BreedListBySpecie(Resource):
     @api.marshal_list_with(_breed, envelope='data')
     def get(self, user_pid, parent_id):
         """List all registered breeds"""
-        breeds = get_all_by_specie(parent_id)
+        breeds = get_all_by_specie(user_pid, parent_id)
         if not isinstance(breeds, tuple):
             return breeds
         api.abort(breeds[1])

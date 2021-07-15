@@ -100,7 +100,8 @@ def get_all_comments_by_post(user_pid, post_pid, pagination_no):
                     dict(
                         photo_filename = comment[8]
                     )
-                ] if comment[8] else None
+                ] if comment[8] else None,
+                is_mine = 1 if user_pid == comment[3] else 0,
             ) for comment in db.session.query(
                 Comment.public_id,
                 Comment.content,

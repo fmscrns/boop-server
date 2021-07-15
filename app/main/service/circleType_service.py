@@ -1,3 +1,5 @@
+from sqlalchemy.sql.functions import func
+from app.main.model.preference import Preference
 from app.main.service import model_save_changes
 import uuid
 import datetime
@@ -60,8 +62,25 @@ def delete_a_circleType(public_id, data):
         }
         return response_object, 404
 
-def get_all_circleTypes():
-    return CircleType.query.all()
+def get_all_circleTypes(requestor_pid):
+    return [
+        dict(
+            public_id = _type[0],
+            name = _type[1],
+            is_preferred = _type[2]
+        ) for _type in db.session.query(
+            CircleType.public_id,
+            CircleType.name,
+            func.count(Preference.user_selector_id).filter(Preference.user_selector_id==requestor_pid).filter(Preference.is_followed==True)
+        ).select_from(
+            CircleType
+        ).outerjoin(
+            Preference
+        ).group_by(
+            CircleType.public_id,
+            CircleType.name
+        ).all()
+    ]
 
 def get_a_circleType(public_id):
     return CircleType.query.filter_by(public_id=public_id).first()

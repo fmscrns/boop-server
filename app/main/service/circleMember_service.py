@@ -157,31 +157,43 @@ def accept_circle_member(user_pid, public_id, member_id):
             circle_member_table.c.circle_pid == public_id
         ).filter(
             circle_member_table.c.member_pid == member_id
+        ).filter(
+            circle_member_table.c.is_accepted == False
         ).first()
 
-        if admin and member:
-            statement = circle_member_table.update().where(
-                circle_member_table.c.member_pid==member_id
-            ).where(
-                circle_member_table.c.circle_pid==public_id
-            ).values(
-                is_accepted = True
-            )
-            table_save_changes(statement)
+        if admin:
+            if member:
+                statement = circle_member_table.update().where(
+                    circle_member_table.c.member_pid==member_id
+                ).where(
+                    circle_member_table.c.circle_pid==public_id
+                ).values(
+                    is_accepted = True
+                )
+                table_save_changes(statement)
 
-            notification_service.save_new_notification(
-                "You are now a member of {}.".format(circle.name),
-                0,
-                user_pid,
-                member_id,
-                circle_subject_id = circle.public_id
-            )
+                notification_service.save_new_notification(
+                    "{} has accepted your request to join {}.".format(
+                        User.query.filter_by(public_id=user_pid).first().name,
+                        circle.name
+                    ),
+                    0,
+                    user_pid,
+                    member_id,
+                    circle_subject_id = circle.public_id
+                )
 
-            response_object = {
-                'status': 'success',
-                'message': 'Circle member successfully accepted.'
-            }
-            return response_object, 201
+                response_object = {
+                    'status': 'success',
+                    'message': 'Circle member successfully accepted.'
+                }
+                return response_object, 201
+            else:
+                response_object = {
+                    'status': 'fail',
+                    'message': 'Pending member does not exist anymore.',
+                }
+                return response_object, 404
         else:
             response_object = {
                 'status': 'fail',
@@ -211,7 +223,8 @@ def get_all_circle_members(requestor_pid, public_id, type, search_value):
             if type == "0":
                 notification_list = Notification.query.filter_by(
                     circle_subject_id=public_id,
-                    user_recipient_id=requestor_pid
+                    user_recipient_id=requestor_pid,
+                    _type=1
                 ).all()
                 for notif in notification_list:
                     notif.is_read = True
@@ -286,6 +299,18 @@ def create_circle_admin(user_pid, circle_pid, data):
                     is_admin=True
                 )
                 table_save_changes(statement)
+
+                notification_service.save_new_notification(
+                    "{} has made you an admin of {}.".format(
+                        User.query.filter_by(public_id=user_pid).first().name,
+                        circle.name
+                    ),
+                    0,
+                    user_pid,
+                    data.get("public_id"),
+                    circle_subject_id = circle_pid
+                )
+
                 response_object = {
                     'status': 'success',
                     'message': 'Circle successfully have new admin.'
@@ -350,6 +375,18 @@ def delete_circle_admin(user_pid, circle_pid, admin_id, data):
                     is_admin = False
                 )
                 table_save_changes(statement)
+
+                notification_service.save_new_notification(
+                    "{} has removed you as admin of {}.".format(
+                        User.query.filter_by(public_id=user_pid).first().name,
+                        circle.name
+                    ),
+                    0,
+                    user_pid,
+                    admin_id,
+                    circle_subject_id = circle_pid
+                )
+
                 response_object = {
                     'status': 'success',
                     'message': 'Circle admin successfully removed.'

@@ -23,6 +23,7 @@ class Circle(db.Model):
     prop_circle_rel = db.relationship('CircleType', secondary=circle_type_table, cascade="save-update", lazy="joined")
     prop_membership_rel = db.relationship('User', secondary=circle_member_table, cascade="save-update", lazy="joined")
     child_post_rel = db.relationship('Post', cascade="all,delete", lazy="joined")
+    notification_subject_rel = db.relationship("Notification", cascade="all,delete", lazy="joined")
     
     def __repr__(self):
         return "<Circle '{}'>".format(self.name)

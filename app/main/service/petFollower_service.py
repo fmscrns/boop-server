@@ -84,7 +84,8 @@ def get_all_pet_followers(requestor_pid, pet_pid, type):
             if type == "0":
                 notification_list = Notification.query.filter_by(
                     pet_subject_id=pet_pid,
-                    user_recipient_id=requestor_pid
+                    user_recipient_id=requestor_pid,
+                    _type=1
                 ).all()
                 for notif in notification_list:
                     notif.is_read = True
@@ -147,6 +148,18 @@ def create_pet_owner(user_pid, pet_pid, data):
                         is_accepted = True
                     )
                     table_save_changes(statement)
+
+                    notification_service.save_new_notification(
+                        "{} has made you an owner of {}.".format(
+                            User.query.filter_by(public_id=user_pid).first().name,
+                            pet.name
+                        ),
+                        0,
+                        user_pid,
+                        data.get("public_id"),
+                        pet_subject_id = pet_pid
+                    )
+
                     response_object = {
                         'status': 'success',
                         'message': 'Pet successfully have new owner.'
@@ -225,13 +238,26 @@ def delete_pet_owner(user_pid, pet_pid, owner_id, data):
                     is_owner = False
                 )
                 table_save_changes(statement)
+
+                notification_service.save_new_notification(
+                    "{} has removed you as owner of {}.".format(
+                        User.query.filter_by(public_id=user_pid).first().name,
+                        pet.name
+                    ),
+                    0,
+                    user_pid,
+                    owner_id,
+                    pet_subject_id = pet_pid
+                )
+
                 response_object = {
                     'status': 'success',
-                    'message': 'Pet owner successfully removed.'
+                    'message': 'Pet owner successfully removed.',
+                    'single_owner_removed': 0
                 }
                 return response_object, 201
             else:
-                return pet_service.delete_a_pet(pet_pid, user_pid, data)
+                return pet_service.delete_a_pet(pet_pid, user_pid, data, single_owner_removed=True)
         else:
             response_object = {
                 'status': 'fail',
@@ -334,32 +360,42 @@ def accept_pet_follower(user_pid, pet_pid, follower_pid):
         ).filter(
             pet_follower_table.c.pet_pid == pet_pid
         ).filter(
-            pet_follower_table.c.is_owner == False
+            pet_follower_table.c.is_accepted == False
         ).first()
 
-        if owner and follower:
-            statement = pet_follower_table.update().where(
-                pet_follower_table.c.follower_pid==follower_pid
-            ).where(
-                pet_follower_table.c.pet_pid==pet_pid
-            ).values(
-                is_accepted = True
-            )
-            table_save_changes(statement)
+        if owner:
+            if follower:
+                statement = pet_follower_table.update().where(
+                    pet_follower_table.c.follower_pid==follower_pid
+                ).where(
+                    pet_follower_table.c.pet_pid==pet_pid
+                ).values(
+                    is_accepted = True
+                )
+                table_save_changes(statement)
 
-            notification_service.save_new_notification(
-                "You are now a follower of {}.".format(pet.name),
-                0,
-                user_pid,
-                follower_pid,
-                pet_subject_id = pet.public_id
-            )
+                notification_service.save_new_notification(
+                    "{} has accepted your request to follow on {}.".format(
+                        User.query.filter_by(public_id=user_pid).first().name,
+                        pet.name
+                    ),
+                    0,
+                    user_pid,
+                    follower_pid,
+                    pet_subject_id = pet.public_id
+                )
 
-            response_object = {
-                'status': 'success',
-                'message': 'Pet follower successfully accepted.'
-            }
-            return response_object, 201
+                response_object = {
+                    'status': 'success',
+                    'message': 'Pet follower successfully accepted.'
+                }
+                return response_object, 201
+            else:
+                response_object = {
+                    'status': 'fail',
+                    'message': 'Pending follower does not exist anymore.',
+                }
+                return response_object, 404
         else:
             response_object = {
                 'status': 'fail',

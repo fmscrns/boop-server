@@ -33,8 +33,7 @@ def get_all_notifications_by_user(requestor_pid, read=None, count=None):
                 ).filter(
                     Notification.is_read == False
                 ).scalar()
-            )
-                
+            )          
         else:
             return [
                 dict(
@@ -172,7 +171,6 @@ def get_a_notification(requestor_pid, public_id):
     ).filter(
         Notification.user_sender_id == User.public_id
     ).first()
-
     if notification:
         return dict(
             public_id = notification[0],

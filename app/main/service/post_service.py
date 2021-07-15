@@ -28,7 +28,6 @@ def save_new_post(user_pid, data):
         registered_on = datetime.datetime.utcnow(),
         user_creator_id = user_pid,
     )
-
     if data.get("pinboard_id"):
         business = Business.query.filter_by(public_id=data["pinboard_id"]).first()
         if business:
@@ -39,7 +38,6 @@ def save_new_post(user_pid, data):
                 'message': 'No business found.'
             }
             return response_object, 404
-
     if data.get("confiner_id"):
         circle = Circle.query.filter_by(public_id=data["confiner_id"]).first()
         if circle:
@@ -65,9 +63,7 @@ def save_new_post(user_pid, data):
                 'message': 'No circle found.'
             }
             return response_object, 404
-            
     model_save_changes(new_post)
-
     for subject in data.get("subject"):
         statement = post_subject_table.insert().values(
             public_id = str(uuid.uuid4()),
@@ -75,7 +71,6 @@ def save_new_post(user_pid, data):
             subject_pid = subject["public_id"]
         )
         table_save_changes(statement)
-
     response_object = {
         'status': 'success',
         'message': 'Post successfully registered.'
@@ -850,7 +845,8 @@ def get_all_posts(requestor_pid, pagination_no):
                 Circle.public_id,
                 Circle.name,
                 Circle.photo
-            ).order_by(Post.registered_on.desc()
+            ).order_by(
+                Post.registered_on.desc()
             ).paginate(
                 page=pagination_no,
                 per_page=current_app.config["PER_PAGE_PAGINATION"]
@@ -894,7 +890,8 @@ def get_a_post(requestor_pid, public_id):
         if post[7] == requestor_pid:
             notification_list = Notification.query.filter_by(
                 post_subject_id=post[0],
-                user_recipient_id=requestor_pid
+                user_recipient_id=requestor_pid,
+                _type=0
             ).all()
             for notif in notification_list:
                 notif.is_read = True

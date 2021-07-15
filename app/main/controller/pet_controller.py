@@ -1,9 +1,10 @@
+import time
 from flask import request
 from flask_restx import Resource
 
 from ..util.dto import PetDto, UserDto
 from ..util.decorator import *
-from ..service.pet_service import save_new_pet, get_all_pets_by_user, get_a_pet, patch_a_pet, delete_a_pet
+from ..service.pet_service import save_new_pet, get_all_pets_by_user, get_a_pet, patch_a_pet, delete_a_pet, get_all_pets_by_preference, get_all_by_search
 from ..service.petFollower_service import create_pet_owner, get_all_pet_followers, create_pet_follower, delete_pet_follower, accept_pet_follower, delete_pet_owner
 
 api = PetDto.api
@@ -12,6 +13,21 @@ _user = UserDto.user
 
 @api.route('/')
 class PetList(Resource):
+    @token_required
+    @api.doc('list_of_registered_users')
+    @api.marshal_list_with(_pet, envelope='data')
+    def get(self, user_pid):
+        """List registered users"""
+        time.sleep(1)
+        return get_all_by_search(
+            request.args.get("search"),
+            request.args.get("group_id"),
+            request.args.get("subgroup_id"),
+            request.args.get("status"),
+            request.args.get("pagination_no",
+            type=int)
+        )
+
     @token_required
     @api.response(201, 'Pet successfully created.')
     @api.doc('create a new pet')
@@ -30,6 +46,16 @@ class PetListByUser(Resource):
     def get(self, user_pid, owner_id):
         """List all registered pets"""
         return get_all_pets_by_user(user_pid, owner_id, request.args.get("tag_suggestions"))
+
+@api.route('/preference')
+class PetListByPreference(Resource):
+    @token_required
+    @api.doc('list_of_registered_pets')
+    @api.marshal_list_with(_pet, envelope='data')
+    def get(self, user_pid):
+        """List all registered pets"""
+        time.sleep(1)
+        return get_all_pets_by_preference(user_pid, request.args.get("pagination_no", type=int))
 
 @api.route('/<public_id>')
 @api.param('public_id', 'The Pet identifier')

@@ -15,7 +15,7 @@ class BusinessTypeList(Resource):
     @api.marshal_list_with(_businessType, envelope='data')
     def get(self, user_pid):
         """List all registered business types"""
-        return get_all_businessTypes()
+        return get_all_businessTypes(user_pid)
 
     @admin_token_required
     @api.response(201, 'Business type successfully created.')

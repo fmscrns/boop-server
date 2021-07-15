@@ -1,9 +1,9 @@
 from flask import request
 from flask_restx import Resource
-
+import time
 from ..util.dto import BusinessDto, UserDto
 from ..util.decorator import *
-from ..service.business_service import save_new_business, get_all_businesses, get_all_businesses_by_user, get_a_business, patch_a_business, delete_a_business
+from ..service.business_service import get_all_businesses_by_preference, save_new_business, get_all_businesses, get_all_businesses_by_user, get_a_business, patch_a_business, delete_a_business
 from ..service.businessFollower_service import create_business_follower, get_all_business_followers, delete_business_follower, create_business_executive, delete_business_executive
 
 api = BusinessDto.api
@@ -12,12 +12,6 @@ _user = UserDto.user
 
 @api.route('/')
 class BusinessList(Resource):
-    # @api.doc('list_of_registered_businesses')
-    # @api.marshal_list_with(_business, envelope='data')
-    # def get(self):
-    #     """List all registered businesses"""
-    #     return get_all_businesses()
-
     @token_required
     @api.response(201, 'Business successfully created.')
     @api.doc('create a new business')
@@ -41,6 +35,16 @@ class BusinessListByUser(Resource):
     def get(self, user_pid, exec_id):
         """List all registered businesses"""
         return get_all_businesses_by_user(user_pid, exec_id)
+
+@api.route('/preference')
+class BusinessListByPreference(Resource):
+    @token_required
+    @api.doc('list_of_registered_businesses')
+    @api.marshal_list_with(_business, envelope='data')
+    def get(self, user_pid):
+        """List all registered businesses"""
+        time.sleep(1)
+        return get_all_businesses_by_preference(user_pid, request.args.get("pagination_no", type=int))
 
 @api.route('/<public_id>')
 @api.param('public_id', 'The Business identifier')
