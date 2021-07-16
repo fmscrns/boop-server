@@ -71,11 +71,8 @@ def save_new_post(user_pid, data):
             subject_pid = subject["public_id"]
         )
         table_save_changes(statement)
-    response_object = {
-        'status': 'success',
-        'message': 'Post successfully registered.'
-    }
-    return response_object, 201
+
+    return get_a_post(user_pid, new_post_pid)
 
 def get_all_posts_by_user(requestor_pid, pagination_no):
     try:

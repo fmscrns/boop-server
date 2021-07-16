@@ -22,9 +22,11 @@ class PostList(Resource):
     @api.response(201, 'Post successfully created.')
     @api.doc('create a new post')
     @api.expect(_post, validate=True)
+    @api.marshal_with(_post)
     def post(self, user_pid):
         """Creates a new Post """
         data = request.json
+        time.sleep(1)
         return save_new_post(user_pid=user_pid, data=data)
 
 @api.route('/bytoken')
