@@ -72,6 +72,28 @@ def save_new_post(user_pid, data):
         )
         table_save_changes(statement)
 
+        owner_list = db.session.query(
+            pet_follower_table.c.follower_pid
+        ).filter(
+            pet_follower_table.c.pet_pid == subject["public_id"]
+        ).filter(
+            pet_follower_table.c.follower_pid != user_pid
+        ).filter(
+            pet_follower_table.c.is_owner == True
+        ).all()
+
+        for owner in owner_list:
+            notification_service.save_new_notification(
+                 "{} has tagged {} in a post.".format(
+                    User.query.filter_by(public_id=user_pid).first().name,
+                    Pet.query.filter_by(public_id=subject["public_id"]).first().name
+                ),
+                0,
+                user_pid,
+                owner[0],
+                post_subject_id = new_post_pid
+            )
+
     return get_a_post(user_pid, new_post_pid)
 
 def get_all_posts_by_user(requestor_pid, pagination_no):
@@ -884,15 +906,14 @@ def get_a_post(requestor_pid, public_id):
     ).first()
 
     if post:
-        if post[7] == requestor_pid:
-            notification_list = Notification.query.filter_by(
-                post_subject_id=post[0],
-                user_recipient_id=requestor_pid,
-                _type=0
-            ).all()
-            for notif in notification_list:
-                notif.is_read = True
-            db.session.commit()
+        notification_list = Notification.query.filter_by(
+            post_subject_id=post[0],
+            user_recipient_id=requestor_pid,
+            _type=0
+        ).all()
+        for notif in notification_list:
+            notif.is_read = True
+        db.session.commit()
 
         return dict(
             public_id = post[0],
