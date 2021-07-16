@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 15963c49bed9
+Revision ID: 1f683f9a5d1d
 Revises: 
-Create Date: 2021-06-28 10:56:46.269783
+Create Date: 2021-07-16 15:39:28.351337
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '15963c49bed9'
+revision = '1f683f9a5d1d'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -75,7 +75,7 @@ def upgrade():
     sa.Column('name', sa.String(length=255), nullable=False),
     sa.Column('email', sa.String(length=255), nullable=False),
     sa.Column('registered_on', sa.DateTime(), nullable=False),
-    sa.Column('admin', sa.Boolean(), nullable=False),
+    sa.Column('admin', sa.Boolean(), nullable=True),
     sa.Column('photo', sa.String(length=50), nullable=True),
     sa.Column('public_id', sa.String(length=100), nullable=True),
     sa.Column('username', sa.String(length=50), nullable=True),
@@ -216,6 +216,21 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('public_id')
     )
+    op.create_table('preference',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('public_id', sa.String(length=100), nullable=False),
+    sa.Column('user_selector_id', sa.String(), nullable=False),
+    sa.Column('is_followed', sa.Boolean(), nullable=True),
+    sa.Column('breed_subgroup_id', sa.String(), nullable=True),
+    sa.Column('business_type_id', sa.String(), nullable=True),
+    sa.Column('circle_type_id', sa.String(), nullable=True),
+    sa.ForeignKeyConstraint(['breed_subgroup_id'], ['breed.public_id'], ),
+    sa.ForeignKeyConstraint(['business_type_id'], ['business_type.public_id'], ),
+    sa.ForeignKeyConstraint(['circle_type_id'], ['circle_type.public_id'], ),
+    sa.ForeignKeyConstraint(['user_selector_id'], ['user.public_id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('public_id')
+    )
     op.create_table('notification',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('public_id', sa.String(length=100), nullable=False),
@@ -270,6 +285,7 @@ def downgrade():
     op.drop_table('post_subject_table')
     op.drop_table('pet_follower_table')
     op.drop_table('notification')
+    op.drop_table('preference')
     op.drop_table('post_liker_table')
     op.drop_table('pet')
     op.drop_table('comment')

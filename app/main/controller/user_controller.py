@@ -1,6 +1,5 @@
 from flask import request
 from flask_restx import Resource
-import time
 from ..util.dto import UserDto
 from ..util.decorator import *
 from ..service.user_service import save_new_user, get_a_user, get_by_email, get_by_username, patch_a_user, get_by_token, get_all_by_search
@@ -17,7 +16,6 @@ class UserList(Resource):
     @api.marshal_list_with(_user, envelope='data')
     def get(self, user_pid):
         """List registered users"""
-        time.sleep(1)
         return get_all_by_search(
             user_pid,
             request.args.get("search"),

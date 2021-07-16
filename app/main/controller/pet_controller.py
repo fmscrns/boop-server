@@ -1,4 +1,3 @@
-import time
 from flask import request
 from flask_restx import Resource
 
@@ -18,7 +17,6 @@ class PetList(Resource):
     @api.marshal_list_with(_pet, envelope='data')
     def get(self, user_pid):
         """List registered users"""
-        time.sleep(1)
         return get_all_by_search(
             request.args.get("search"),
             request.args.get("group_id"),
@@ -54,7 +52,6 @@ class PetListByPreference(Resource):
     @api.marshal_list_with(_pet, envelope='data')
     def get(self, user_pid):
         """List all registered pets"""
-        time.sleep(1)
         return get_all_pets_by_preference(user_pid, request.args.get("pagination_no", type=int))
 
 @api.route('/<public_id>')

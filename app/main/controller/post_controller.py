@@ -1,6 +1,5 @@
 from flask import request
 from flask_restx import Resource
-import time
 from ..util.dto import PostDto
 from ..util.decorator import *
 from ..service.post_service import like_a_post, save_new_post, get_all_posts, get_all_posts_by_user, get_a_post, delete_a_post, get_all_posts_by_business, get_all_posts_by_circle, get_all_posts_by_pet
@@ -15,7 +14,6 @@ class PostList(Resource):
     @api.marshal_list_with(_post, envelope='data')
     def get(self, user_pid):
         """List all registered user specific feed posts"""
-        time.sleep(1)
         return get_all_posts(user_pid, request.args.get("pagination_no", type=int))
 
     @token_required
@@ -26,7 +24,6 @@ class PostList(Resource):
     def post(self, user_pid):
         """Creates a new Post """
         data = request.json
-        time.sleep(1)
         return save_new_post(user_pid=user_pid, data=data)
 
 @api.route('/bytoken')
@@ -36,7 +33,6 @@ class PostListByToken(Resource):
     @api.marshal_list_with(_post, envelope='data')
     def get(self, user_pid):
         """List all registered posts"""
-        time.sleep(1)
         return get_all_posts_by_user(user_pid, request.args.get("pagination_no", type=int))
 
 @api.route('/subject/<subject_id>')
@@ -47,7 +43,6 @@ class PostListByPet(Resource):
     @api.marshal_list_with(_post, envelope='data')
     def get(self, user_pid, subject_id):
         """List all registered posts"""
-        time.sleep(1)
         return get_all_posts_by_pet(user_pid, subject_id, request.args.get("w_media_only"), request.args.get("pagination_no", type=int))
 
 @api.route('/pinboard/<pinboard_id>')
@@ -58,7 +53,6 @@ class PostListByBusiness(Resource):
     @api.marshal_list_with(_post, envelope='data')
     def get(self, user_pid, pinboard_id):
         """List all registered posts"""
-        time.sleep(1)
         return get_all_posts_by_business(user_pid, pinboard_id, request.args.get("w_media_only"), request.args.get("pagination_no", type=int))
 
 @api.route('/confiner/<confiner_id>')
@@ -69,7 +63,6 @@ class PostListByCircle(Resource):
     @api.marshal_list_with(_post, envelope='data')
     def get(self, user_pid, confiner_id):
         """List all registered posts"""
-        time.sleep(1)
         list = get_all_posts_by_circle(user_pid, confiner_id, request.args.get("w_media_only"), request.args.get("pagination_no", type=int))
         return list
 @api.route('/<public_id>')
