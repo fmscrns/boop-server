@@ -180,6 +180,16 @@ def create_pet_owner(user_pid, pet_pid, data):
                     is_owner=True
                 )
                 table_save_changes(statement)
+                notification_service.save_new_notification(
+                    "{} has made you an owner of {}.".format(
+                        User.query.filter_by(public_id=user_pid).first().name,
+                        pet.name
+                    ),
+                    0,
+                    user_pid,
+                    data.get("public_id"),
+                    pet_subject_id = pet_pid
+                )
                 response_object = {
                     'status': 'success',
                     'message': 'Pet successfully have new owner.'

@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 1f683f9a5d1d
+Revision ID: e6a29a7b2d7c
 Revises: 
-Create Date: 2021-07-16 15:39:28.351337
+Create Date: 2021-07-19 18:03:24.733942
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '1f683f9a5d1d'
+revision = 'e6a29a7b2d7c'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -96,7 +96,7 @@ def upgrade():
     sa.UniqueConstraint('name'),
     sa.UniqueConstraint('public_id')
     )
-    op.create_table('business_executive_table',
+    op.create_table('business_follower_table',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('public_id', sa.String(length=100), nullable=True),
     sa.Column('business_pid', sa.String(length=100), nullable=True),
@@ -294,7 +294,7 @@ def downgrade():
     op.drop_table('circle_member_table')
     op.drop_table('business_type_table')
     op.drop_table('business_operation')
-    op.drop_table('business_executive_table')
+    op.drop_table('business_follower_table')
     op.drop_table('breed')
     op.drop_table('user')
     op.drop_table('specie')

@@ -24,7 +24,7 @@ pet_follower_table = db.Table('pet_follower_table',
     db.Column('registered_on', db.DateTime, nullable=False, default=datetime.datetime.utcnow)
 )
 
-business_follower_table = db.Table('business_executive_table',
+business_follower_table = db.Table('business_follower_table',
     db.Column('id', db.Integer, primary_key=True, autoincrement=True),
     db.Column('public_id', db.String(100), unique=True),
     db.Column('business_pid', db.String(100), db.ForeignKey('business.public_id')),

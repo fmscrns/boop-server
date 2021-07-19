@@ -1,3 +1,4 @@
+from app.main.model.notification import Notification
 import uuid
 from sqlalchemy import func
 from app.main import db
@@ -138,9 +139,18 @@ def delete_business_follower(requestor_pid, business_pid, follower_pid):
         }
         return response_object, 404 
 
-def get_all_business_followers(business_pid):
-    business = Business.query.filter_by(public_id=business_pid).first()
+def get_all_business_followers(requestor_pid, business_pid):
+    business = business_service.get_a_business(requestor_pid, business_pid)
     if business:
+        if business["visitor_auth"] == 2:
+            notification_list = Notification.query.filter_by(
+                business_subject_id=business["public_id"],
+                user_recipient_id=requestor_pid,
+                _type=1
+            ).all()
+            for notif in notification_list:
+                notif.is_read = True
+            db.session.commit()
         return db.session.query(
             User
         ).filter(

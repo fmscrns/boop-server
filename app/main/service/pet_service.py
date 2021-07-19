@@ -43,8 +43,7 @@ def save_new_pet(user_pid, data):
         table_save_changes(statement)
         response_object = {
             'status': 'success',
-            'message': 'Pet successfully registered.',
-            'payload': User.query.filter_by(public_id=user_pid).first().username
+            'message': 'Pet successfully registered.'
         }
         return response_object, 201
     else:
@@ -487,7 +486,7 @@ def delete_a_pet(public_id, user_pid, data, single_owner_removed=False):
         }
         return response_object, 404
 
-def get_all_by_search(value, specie_pid, breed_pid, status, pagination_no):
+def get_all_by_search(requestor_pid, value, specie_pid, breed_pid, status, pagination_no):
     return [
         dict(
             public_id = pet[0],
@@ -521,6 +520,22 @@ def get_all_by_search(value, specie_pid, breed_pid, status, pagination_no):
             func.count(pet_follower_table.c.pet_pid).filter(pet_follower_table.c.is_owner == None).label("follower_count")
         ).select_from(
             Pet
+        ).filter(
+            not_(
+                Pet.public_id.in_(
+                    db.session.query(
+                        pet_follower_table.c.pet_pid
+                    ).select_from(
+                        pet_follower_table
+                    ).outerjoin(
+                        Pet
+                    ).outerjoin(
+                        User
+                    ).filter(
+                        User.public_id == requestor_pid
+                    ).subquery()
+                )
+            )
         ).filter(
             Pet.name.ilike("%{}%".format(value))
         ).filter(

@@ -84,7 +84,7 @@ class BusinessFollowerList(Resource):
     @api.marshal_list_with(_user, envelope='data')
     def get(self, user_pid, public_id):
         """List all registered business followers"""
-        return get_all_business_followers(public_id)
+        return get_all_business_followers(user_pid, public_id)
 
     @token_required
     @api.doc('create business follower')

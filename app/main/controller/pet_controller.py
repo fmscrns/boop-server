@@ -18,6 +18,7 @@ class PetList(Resource):
     def get(self, user_pid):
         """List registered users"""
         return get_all_by_search(
+            user_pid,
             request.args.get("search"),
             request.args.get("group_id"),
             request.args.get("subgroup_id"),
