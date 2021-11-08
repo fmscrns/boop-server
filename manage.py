@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from app import blueprint
+from app import blueprint, populate_bp
 from flask_migrate import Migrate, MigrateCommand
 from flask_script import Manager
 
@@ -11,6 +11,7 @@ from app.main.model import user, breed, specie, blacklist, pet, business, busine
 
 app = create_app(os.getenv('BOILERPLATE_ENV') or 'dev')
 app.register_blueprint(blueprint)
+app.register_blueprint(populate_bp, url_prefix="/populate")
 
 app.app_context().push()
 
