@@ -283,9 +283,9 @@ def get_a_pet(requestor_pid, public_id):
     ).filter(
         Pet.public_id == public_id
     ).outerjoin(
-        Specie
-    ).outerjoin(
         Breed
+    ).outerjoin(
+        Specie
     ).outerjoin(
         pet_follower_table
     ).group_by(
