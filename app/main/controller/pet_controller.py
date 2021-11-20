@@ -16,7 +16,7 @@ class PetList(Resource):
     @api.doc('list_of_registered_users')
     @api.marshal_list_with(_pet, envelope='data')
     def get(self, user_pid):
-        """List registered users"""
+        """List registered pets"""
         return get_all_by_search(
             user_pid,
             request.args.get("search"),

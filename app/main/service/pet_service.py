@@ -502,7 +502,54 @@ def get_all_by_search(requestor_pid, value, specie_pid, breed_pid, status, pagin
             subgroup_id = pet[10],
             subgroup_name = pet[11],
             is_private = pet[12],
-            follower_count = pet[13]
+            follower_count = pet[13],
+            visitor_auth = 3 if db.session.query(
+                pet_follower_table
+            ).filter(
+                pet_follower_table.c.follower_pid == requestor_pid
+            ).filter(
+                pet_follower_table.c.is_owner == True
+            ).filter(
+                pet_follower_table.c.pet_pid == pet[0]
+            ).filter(
+                pet_follower_table.c.is_accepted == True
+            ).first() else 2 if db.session.query(
+                pet_follower_table
+            ).filter(
+                pet_follower_table.c.follower_pid == requestor_pid
+            ).filter(
+                pet_follower_table.c.is_owner == False
+            ).filter(
+                pet_follower_table.c.pet_pid == pet[0]
+            ).filter(
+                pet_follower_table.c.is_accepted == True
+            ).first() else 1 if db.session.query(
+                pet_follower_table
+            ).filter(
+                pet_follower_table.c.follower_pid == requestor_pid
+            ).filter(
+                pet_follower_table.c.is_owner == False
+            ).filter(
+                pet_follower_table.c.pet_pid == pet[0]
+            ).filter(
+                pet_follower_table.c.is_accepted == False
+            ).first() else 0,
+            owner = [
+                dict(
+                    owner_id = owner[0],
+                    owner_name = owner[1],
+                    owner_username = owner[2],
+                    owner_photo = owner[3],
+                ) for owner in db.session.query(
+                    User.public_id,
+                    User.name,
+                    User.username,
+                    User.photo
+                ).filter(pet_follower_table.c.follower_pid==User.public_id
+                ).filter(pet_follower_table.c.is_owner==True
+                ).filter(pet_follower_table.c.pet_pid==pet[0]
+                ).all()
+            ]
         ) for pet in db.session.query(
             Pet.public_id,
             Pet.name,
@@ -531,6 +578,8 @@ def get_all_by_search(requestor_pid, value, specie_pid, breed_pid, status, pagin
                         Pet
                     ).outerjoin(
                         User
+                    ).filter(
+                        pet_follower_table.c.is_owner == True
                     ).filter(
                         User.public_id == requestor_pid
                     ).subquery()
