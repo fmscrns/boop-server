@@ -15,43 +15,34 @@ from app.main.model.specie import Specie
 from app.main.model.breed import Breed
 
 def save_new_pet(user_pid, data):
-    specie = Specie.query.filter_by(public_id=data["group_id"]).first().name
-    breed = Breed.query.filter_by(public_id=data["subgroup_id"]).first().name
-    if specie and breed:
-        new_pet_pid = str(uuid.uuid4())
-        new_pet = Pet(
-            public_id = new_pet_pid,
-            name = data.get("name"),
-            bio = data.get("bio"),
-            birthday = data.get("birthday"),
-            sex = data.get("sex"),
-            status = data.get("status"),
-            is_private = data.get("is_private"),
-            photo = data.get("photo"),
-            registered_on = datetime.datetime.utcnow(),
-            specie_group_id = data.get("group_id"),
-            breed_subgroup_id = data.get("subgroup_id")
-        )
-        model_save_changes(new_pet)
-        statement = pet_follower_table.insert().values(
-            public_id = str(uuid.uuid4()),
-            follower_pid = user_pid,
-            pet_pid = new_pet_pid,
-            is_owner = True,
-            is_accepted = True
-        )
-        table_save_changes(statement)
-        response_object = {
-            'status': 'success',
-            'message': 'Pet successfully registered.'
-        }
-        return response_object, 201
-    else:
-        response_object = {
-            'status': 'fail',
-            'message': 'Bad request.',
-        }
-        return response_object, 400
+    new_pet_pid = str(uuid.uuid4())
+    new_pet = Pet(
+        public_id = new_pet_pid,
+        name = data.get("name"),
+        bio = data.get("bio"),
+        birthday = data.get("birthday"),
+        sex = data.get("sex"),
+        status = data.get("status"),
+        is_private = data.get("is_private"),
+        photo = data.get("photo"),
+        registered_on = datetime.datetime.utcnow(),
+        specie_group_id = data.get("group_id"),
+        breed_subgroup_id = data.get("subgroup_id")
+    )
+    model_save_changes(new_pet)
+    statement = pet_follower_table.insert().values(
+        public_id = str(uuid.uuid4()),
+        follower_pid = user_pid,
+        pet_pid = new_pet_pid,
+        is_owner = True,
+        is_accepted = True
+    )
+    table_save_changes(statement)
+    response_object = {
+        'status': 'success',
+        'message': 'Pet successfully registered.'
+    }
+    return response_object, 201
 
 def get_all_pets_by_user(requestor_pid, user_pid, tag_suggestions):
     return [
