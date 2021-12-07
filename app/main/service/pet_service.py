@@ -15,8 +15,8 @@ from app.main.model.specie import Specie
 from app.main.model.breed import Breed
 
 def save_new_pet(user_pid, data):
-    specie = Specie.query.filter_by(public_id=data["group_id"]).first()
-    breed = Breed.query.filter_by(public_id=data["subgroup_id"]).first()
+    specie = Specie.query.filter_by(public_id=data["group_id"]).first().name
+    breed = Breed.query.filter_by(public_id=data["subgroup_id"]).first().name
     if specie and breed:
         new_pet_pid = str(uuid.uuid4())
         new_pet = Pet(
