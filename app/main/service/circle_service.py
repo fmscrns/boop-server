@@ -40,7 +40,8 @@ def save_new_circle(user_pid, data):
         table_save_changes(statement)
         response_object = {
             'status': 'success',
-            'message': 'Circle successfully registered.'
+            'message': 'Circle successfully registered.',
+            'public_id': circle_pid
         }
         return response_object, 201
     except:

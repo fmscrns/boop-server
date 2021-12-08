@@ -59,7 +59,8 @@ def save_new_business(user_pid, data):
             model_save_changes(new_operation)
         response_object = {
             'status': 'success',
-            'message': 'Business successfully registered.'
+            'message': 'Business successfully registered.',
+            'public_id': business_pid
         }
         return response_object, 201
     except:
