@@ -40,7 +40,8 @@ def save_new_pet(user_pid, data):
     table_save_changes(statement)
     response_object = {
         'status': 'success',
-        'message': 'Pet successfully registered.'
+        'message': 'Pet successfully registered.',
+        'public_id': new_pet_pid
     }
     return response_object, 201
 
