@@ -35,7 +35,7 @@ pandas==1.1.5
 prompt-toolkit==3.0.19
 psycopg2==2.8.6
 pycparser==2.20
-PyJWT==1.7.1
+PyJWT==2.4.0
 pyrsistent==0.17.3
 python-dateutil==2.8.1
 python-editor==1.0.4
