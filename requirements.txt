@@ -13,7 +13,7 @@ click-didyoumean==0.0.3
 click-plugins==1.1.1
 click-repl==0.2.0
 et-xmlfile==1.1.0
-Flask==1.1.2
+Flask==2.3.2
 Flask-Bcrypt==0.7.1
 Flask-Migrate==2.5.3
 flask-restx==0.5.1
